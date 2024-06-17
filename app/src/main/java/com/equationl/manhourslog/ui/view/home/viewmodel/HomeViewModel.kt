@@ -80,7 +80,7 @@ class HomeViewModel @Inject constructor(
             val offset: Int = TimeZone.getDefault().getOffset(d)
             d = ((d + offset) / 86400000L) * 86400000L - offset
 
-            val totalManHours = db.manHoursDB().queryTodayTotalTime(startTime = d, endTime = d + 86400000L)
+            val totalManHours = db.manHoursDB().queryRangeTotalTime(startTime = d, endTime = d + 86400000L)
 
             _uiState.update { it.copy(totalManHours = totalManHours) }
         }
