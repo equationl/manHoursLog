@@ -22,6 +22,11 @@ object DateTimeUtil {
         return sDateFormat.format(Date(this))
     }
 
+    fun String.toTimestamp(format: String = "yyyy-MM-dd HH:mm:ss"): Long {
+        val date = SimpleDateFormat(format, Locale.getDefault()).parse(this)
+        return date?.time ?: 0L
+    }
+
     fun getWeeOfToday(): Long {
         val cal = Calendar.getInstance()
         cal[Calendar.HOUR_OF_DAY] = 0

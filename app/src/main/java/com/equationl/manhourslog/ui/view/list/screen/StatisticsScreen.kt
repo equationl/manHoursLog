@@ -1,6 +1,5 @@
 package com.equationl.manhourslog.ui.view.list.screen
 
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,17 +35,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
-import com.equationl.manhourslog.App
-import com.equationl.manhourslog.database.DBManHoursTable
+import com.equationl.manhourslog.model.StaticsScreenModel
 import com.equationl.manhourslog.ui.view.LocalNavController
 import com.equationl.manhourslog.ui.view.list.state.StatisticsShowScale
 import com.equationl.manhourslog.ui.view.list.state.StatisticsShowType
 import com.equationl.manhourslog.ui.view.list.state.StatisticsState
 import com.equationl.manhourslog.ui.view.list.state.getNext
 import com.equationl.manhourslog.ui.view.list.viewmodel.StatisticsViewModel
-import com.equationl.manhourslog.ui.widget.LinkText
 import com.equationl.manhourslog.ui.widget.ListEmptyContent
 import com.equationl.manhourslog.ui.widget.LoadingContent
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
@@ -124,18 +119,13 @@ private fun HomeContent(
     state: StatisticsState,
     onChangeScale: (newScale: StatisticsShowScale) -> Unit,
 ) {
-    if (state.dataFlow == null) {
-        LoadingContent()
-    }
-    else {
-        when (state.showType) {
-            StatisticsShowType.List ->
-                ListContent(
-                    state,
-                    onChangeScale = onChangeScale
-                )
-            StatisticsShowType.Chart -> ChartContent()
-        }
+    when (state.showType) {
+        StatisticsShowType.List ->
+            ListContent(
+                state,
+                onChangeScale = onChangeScale
+            )
+        StatisticsShowType.Chart -> ChartContent()
     }
 }
 
@@ -145,20 +135,11 @@ private fun ListContent(
     state: StatisticsState,
     onChangeScale: (newScale: StatisticsShowScale) -> Unit,
 ) {
-    val dataList = state.dataFlow!!.collectAsLazyPagingItems()
 
-    if (dataList.loadState.refresh is LoadState.Error) {
-        Toast.makeText(App.instance, "加载错误：${(dataList.loadState.refresh as LoadState.Error).error.message}", Toast.LENGTH_SHORT).show()
-    }
+    val dataList = state.dataList
 
-    if (dataList.itemCount < 1) {
-        if (dataList.loadState.refresh == LoadState.Loading) {
-            LoadingContent()
-        } else {
-            ListEmptyContent("Data is Empty, Click to refresh") {
-                dataList.refresh()
-            }
-        }
+    if (dataList.isEmpty()) {
+        ListEmptyContent("Data is Empty")
     }
     else {
         Column(
@@ -188,53 +169,25 @@ private fun ListContent(
 
                 var lastTitle = ""
 
-                dataList.itemSnapshotList.forEach {
-                    val item = it
-                    val currentTitle = item?.startTime?.formatDateTime("yyyy-MM-dd") ?: ""
-                    if (currentTitle != lastTitle) {
+                dataList.forEach { item ->
+                    if (item.headerTitle != lastTitle) {
                         stickyHeader {
-                            TodoListGroupHeader(leftText = item?.startTime?.formatDateTime("yyyy-MM-dd") ?: "")
+                            TodoListGroupHeader(leftText = item.headerTitle, rightText = item.headerTotalTime.formatTime())
                         }
-                        lastTitle = currentTitle
+                        lastTitle = item.headerTitle
                     }
-                    if (item != null) {
-                        item(key = it.id) {
-                            ListItem(
-                                item,
-                                onClickCard = {
-                                    if (state.showScale != StatisticsShowScale.Day) {
-                                        onChangeScale(state.showScale.getNext())
-                                    }
+                    item(key = item.id) {
+                        ListItem(
+                            item,
+                            currentScale = state.showScale,
+                            onClickCard = {
+                                if (state.showScale != StatisticsShowScale.Day) {
+                                    onChangeScale(state.showScale.getNext())
                                 }
-                            )
-                        }
-                    }
-                }
-
-                item {
-                    when (dataList.loadState.append) {
-                        is LoadState.NotLoading -> {}
-                        LoadState.Loading -> {
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Text("Loading...")
                             }
-                        }
-
-                        is LoadState.Error -> {
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                LinkText("Load fail, click to retry") {
-                                    dataList.retry()
-                                }
-                                Toast.makeText(App.instance, "Error：${(dataList.loadState.append as LoadState.Error).error}", Toast.LENGTH_SHORT).show()
-                            }
-                        }
+                        )
                     }
+
                 }
             }
         }
@@ -248,7 +201,8 @@ private fun ChartContent() {
 
 @Composable
 private fun ListItem(
-    item: DBManHoursTable,
+    item: StaticsScreenModel,
+    currentScale: StatisticsShowScale,
     onClickCard: () -> Unit
 ) {
     Card(
@@ -267,8 +221,13 @@ private fun ListItem(
                 modifier = Modifier.fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                Text(text = "Start Time: ${item.startTime.formatDateTime()}")
-                Text(text = "End Time: ${item.endTime.formatDateTime()}")
+                if (currentScale == StatisticsShowScale.Day) {
+                    Text(text = "Start Time: ${item.startTime.formatDateTime()}")
+                    Text(text = "End Time: ${item.endTime.formatDateTime()}")
+                }
+                else {
+                    Text(text = "Date: ${item.startTime.formatDateTime(format = if (currentScale == StatisticsShowScale.Month) "yyyy-MM-dd" else "yyyy-MM")}")
+                }
             }
 
             Text(text = item.totalTime.formatTime(), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))

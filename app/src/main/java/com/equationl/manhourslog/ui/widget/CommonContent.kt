@@ -30,13 +30,13 @@ fun LoadingContent(
 }
 
 @Composable
-fun ListEmptyContent(msg: String, onClick: () -> Unit) {
+fun ListEmptyContent(msg: String, onClick: (() -> Unit)? = null) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize()
     ) {
-        Text(text = msg, modifier = Modifier.clickable { onClick() })
+        Text(text = msg, modifier = Modifier.clickable { onClick?.invoke() })
     }
 }
 

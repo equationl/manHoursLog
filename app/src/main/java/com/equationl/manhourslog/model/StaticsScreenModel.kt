@@ -1,11 +1,10 @@
 package com.equationl.manhourslog.model
 
-import com.equationl.manhourslog.database.DBManHoursTable
-
 data class StaticsScreenModel(
-    val rawData: DBManHoursTable,
-    val yearSum: Long,
-    val monthSum: Long,
-    val daySum: Long,
-    val headerTitle: String
+    val id: Int,
+    val startTime: Long,
+    val endTime: Long,
+    val totalTime: Long,
+    val headerTitle: String,
+    val headerTotalTime: Long
 )

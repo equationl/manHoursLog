@@ -1,15 +1,18 @@
 package com.equationl.manhourslog.ui.view.list.state
 
-import androidx.paging.PagingData
-import com.equationl.manhourslog.database.DBManHoursTable
-import kotlinx.coroutines.flow.Flow
+import com.equationl.manhourslog.model.StaticsScreenModel
+import com.equationl.manhourslog.util.DateTimeUtil
 
 data class StatisticsState(
     val isLoading: Boolean = true,
-    val showRange: StatisticsShowRange = StatisticsShowRange(),
+    val showRange: StatisticsShowRange = StatisticsShowRange(
+        // 默认当前月
+        start = DateTimeUtil.getWeeOfCurrentMonth(),
+        end = DateTimeUtil.getCurrentMonthEnd(),
+    ),
     val showType: StatisticsShowType = StatisticsShowType.List,
     val showScale: StatisticsShowScale = StatisticsShowScale.Day,
-    val dataFlow: Flow<PagingData<DBManHoursTable>>? = null,
+    val dataList: List<StaticsScreenModel> = listOf(),
 )
 
 data class StatisticsShowRange(

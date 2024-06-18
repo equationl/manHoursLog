@@ -113,7 +113,7 @@ private fun HomeContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize(),
     ) {
-        Text(text = "今日已工作 ${(state.totalManHours + currentTime.coerceAtLeast(0L)).formatTime()}")
+        Text(text = "Today's man hours: ${(state.totalManHours + currentTime.coerceAtLeast(0L)).formatTime()}")
         Spacer(modifier = Modifier.height(16.dp))
         Card(
             onClick = onToggleStart,
@@ -125,12 +125,12 @@ private fun HomeContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxSize()
             ) {
-                Text(text = if (state.logState.isStart) "停止" else "开始")
+                Text(text = if (state.logState.isStart) "Finish" else "Start")
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
         if (currentTime >= 0L) {
-            Text(text = "本次启动已工作 ${currentTime.formatTime()}")
+            Text(text = "Man Hours in this session: ${currentTime.formatTime()}")
         }
     }
 }
