@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -20,7 +20,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -28,10 +28,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.equationl.manhourslog.constants.Route
+import com.equationl.manhourslog.ui.view.LocalNavController
 import com.equationl.manhourslog.ui.view.home.state.HomeState
 import com.equationl.manhourslog.ui.view.home.viewmodel.HomeViewModel
 import com.equationl.manhourslog.ui.widget.LoadingContent
-import com.equationl.manhourslog.util.Utils.formatTime
+import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -69,13 +71,19 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar() {
+    val navController = LocalNavController.current
+
     TopAppBar(
         title = {
             Text(text = "Man Hour Log")
         },
         actions = {
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(Icons.Outlined.Menu, contentDescription = "menu")
+            IconButton(
+                onClick = {
+                    navController.navigate(Route.STATISTIC)
+                }
+            ) {
+                Icon(Icons.Outlined.Analytics, contentDescription = "menu")
             }
         }
     )
@@ -86,7 +94,7 @@ private fun HomeContent(
     state: HomeState,
     onToggleStart: () -> Unit,
 ) {
-    var currentTime by remember(key1 = state.logState) { mutableStateOf(-1L) }
+    var currentTime by remember(key1 = state.logState) { mutableLongStateOf(-1L) }
 
     LaunchedEffect(key1 = state.logState) {
         withContext(Dispatchers.IO) {

@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.equationl.manhourslog.constants.Route
 import com.equationl.manhourslog.ui.view.home.screen.HomeScreen
+import com.equationl.manhourslog.ui.view.list.screen.StatisticsScreen
 
 val LocalNavController = staticCompositionLocalOf<NavHostController> { error("No NavController provided") }
 
@@ -20,6 +21,9 @@ fun HomeNavHost() {
         NavHost(navController = LocalNavController.current, Route.HOME) {
             composable(Route.HOME) {
                 HomeScreen()
+            }
+            composable(Route.STATISTIC) {
+                StatisticsScreen()
             }
         }
     }
