@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.equationl.manhourslog.database.DBManHoursTable
 import com.equationl.manhourslog.database.ManHoursDB
 import com.equationl.manhourslog.model.StaticsScreenModel
+import com.equationl.manhourslog.ui.view.list.state.StatisticsShowRange
 import com.equationl.manhourslog.ui.view.list.state.StatisticsShowScale
+import com.equationl.manhourslog.ui.view.list.state.StatisticsShowType
 import com.equationl.manhourslog.ui.view.list.state.StatisticsState
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.toTimestamp
@@ -37,15 +39,38 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
-    fun changeShowScale(newScale: StatisticsShowScale) {
-        // TODO
+    fun changeShowScale(newScale: StatisticsShowScale, newRange: StatisticsShowRange?) {
+        Log.w("el", "changeShowScale: scale = $newScale, range = $newRange", )
+
+
         _uiState.update {
             it.copy(
-                showScale = newScale
+                showScale = newScale,
+                showRange = newRange ?: it.showRange
             )
         }
         viewModelScope.launch {
             loadData()
+        }
+    }
+
+    fun onFilterShowRange(value: StatisticsShowRange) {
+        _uiState.update {
+            it.copy(
+                showRange = value
+            )
+        }
+        viewModelScope.launch {
+            loadData()
+        }
+    }
+
+    fun onChangeShowType() {
+        // TODO
+        _uiState.update {
+            it.copy(
+                showType = if (it.showType == StatisticsShowType.Chart) StatisticsShowType.List else StatisticsShowType.Chart
+            )
         }
     }
 

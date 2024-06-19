@@ -2,14 +2,12 @@ package com.equationl.manhourslog.ui.view.list.state
 
 import com.equationl.manhourslog.model.StaticsScreenModel
 import com.equationl.manhourslog.util.DateTimeUtil
+import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
+import com.equationl.manhourslog.util.DateTimeUtil.toTimestamp
 
 data class StatisticsState(
     val isLoading: Boolean = true,
-    val showRange: StatisticsShowRange = StatisticsShowRange(
-        // 默认当前月
-        start = DateTimeUtil.getWeeOfCurrentMonth(),
-        end = DateTimeUtil.getCurrentMonthEnd(),
-    ),
+    val showRange: StatisticsShowRange = DateTimeUtil.getYearRange(System.currentTimeMillis().formatDateTime("yyyy").toInt()), // 默认今年
     val showType: StatisticsShowType = StatisticsShowType.List,
     val showScale: StatisticsShowScale = StatisticsShowScale.Day,
     val dataList: List<StaticsScreenModel> = listOf(),
@@ -36,5 +34,17 @@ fun StatisticsShowScale.getNext(): StatisticsShowScale {
         StatisticsShowScale.Year -> StatisticsShowScale.Month
         StatisticsShowScale.Month -> StatisticsShowScale.Day
         StatisticsShowScale.Day -> StatisticsShowScale.Year
+    }
+}
+
+fun StatisticsShowScale.getNextRange(time: Long): StatisticsShowRange? {
+    return when (this) {
+        StatisticsShowScale.Year -> DateTimeUtil.getMonthRange(time.formatDateTime("yyyy").toInt(), time.formatDateTime("MM").toInt() - 1)
+        StatisticsShowScale.Month -> {
+            val start = time.formatDateTime("yyyy-MM-dd").toTimestamp("yyyy-MM-dd")
+            val end = start + DateTimeUtil.DAY_MILL_SECOND_TIME
+            StatisticsShowRange(start, end)
+        }
+        StatisticsShowScale.Day -> null
     }
 }

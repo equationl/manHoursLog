@@ -37,15 +37,19 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.equationl.manhourslog.model.StaticsScreenModel
 import com.equationl.manhourslog.ui.view.LocalNavController
+import com.equationl.manhourslog.ui.view.list.state.StatisticsShowRange
 import com.equationl.manhourslog.ui.view.list.state.StatisticsShowScale
 import com.equationl.manhourslog.ui.view.list.state.StatisticsShowType
 import com.equationl.manhourslog.ui.view.list.state.StatisticsState
 import com.equationl.manhourslog.ui.view.list.state.getNext
+import com.equationl.manhourslog.ui.view.list.state.getNextRange
 import com.equationl.manhourslog.ui.view.list.viewmodel.StatisticsViewModel
+import com.equationl.manhourslog.ui.widget.DateTimeRangePickerDialog
 import com.equationl.manhourslog.ui.widget.ListEmptyContent
 import com.equationl.manhourslog.ui.widget.LoadingContent
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
+import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 
 @Composable
 fun StatisticsScreen(
@@ -57,7 +61,10 @@ fun StatisticsScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopBar(
-                showType = state.showType
+                showType = state.showType,
+                iniDateRangeValue = state.showRange,
+                onFilterDateRange = viewModel::onFilterShowRange,
+                onChangeShowType = viewModel::onChangeShowType
             )
         }
     ) { innerPadding ->
@@ -72,9 +79,7 @@ fun StatisticsScreen(
             else {
                 HomeContent(
                     state,
-                    onChangeScale = {
-                        viewModel.changeShowScale(it)
-                    }
+                    onChangeScale = viewModel::changeShowScale
                 )
             }
         }
@@ -84,9 +89,14 @@ fun StatisticsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar(
-    showType: StatisticsShowType
+    showType: StatisticsShowType,
+    iniDateRangeValue: StatisticsShowRange,
+    onFilterDateRange: (value: StatisticsShowRange) -> Unit,
+    onChangeShowType: () -> Unit,
 ) {
     val navController = LocalNavController.current
+    val dialogState = rememberMaterialDialogState()
+
     TopAppBar(
         title = {
             Text(text = "Statistics")
@@ -101,23 +111,29 @@ private fun TopBar(
             }
         },
         actions = {
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(
+                onClick = {
+                    dialogState.show()
+                }
+            ) {
                 Icon(Icons.Outlined.DateRange, contentDescription = "date filter")
             }
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = onChangeShowType) {
                 Icon(
                     if (showType == StatisticsShowType.List) Icons.Outlined.PieChartOutline else Icons.AutoMirrored.Outlined.List,
-                    contentDescription = "chart"
+                    contentDescription = "show type"
                 )
             }
         }
     )
+
+    DateTimeRangePickerDialog(showState = dialogState, initValue = iniDateRangeValue, onFilterDate = onFilterDateRange)
 }
 
 @Composable
 private fun HomeContent(
     state: StatisticsState,
-    onChangeScale: (newScale: StatisticsShowScale) -> Unit,
+    onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
 ) {
     when (state.showType) {
         StatisticsShowType.List ->
@@ -133,7 +149,7 @@ private fun HomeContent(
 @Composable
 private fun ListContent(
     state: StatisticsState,
-    onChangeScale: (newScale: StatisticsShowScale) -> Unit,
+    onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
 ) {
 
     val dataList = state.dataList
@@ -157,7 +173,7 @@ private fun ListContent(
                     ) {
                         SingleChoiceSegmentedButtonRow {
                             StatisticsShowScale.entries.forEachIndexed { index, statisticsShowScale ->
-                                SegmentedButton(selected = statisticsShowScale == state.showScale, onClick = { onChangeScale(statisticsShowScale) }, shape = SegmentedButtonDefaults.itemShape(index = index, count = StatisticsShowScale.entries.size),) {
+                                SegmentedButton(selected = statisticsShowScale == state.showScale, onClick = { onChangeScale(statisticsShowScale, null) }, shape = SegmentedButtonDefaults.itemShape(index = index, count = StatisticsShowScale.entries.size),) {
                                     Text(text = statisticsShowScale.name)
                                 }
                             }
@@ -182,7 +198,7 @@ private fun ListContent(
                             currentScale = state.showScale,
                             onClickCard = {
                                 if (state.showScale != StatisticsShowScale.Day) {
-                                    onChangeScale(state.showScale.getNext())
+                                    onChangeScale(state.showScale.getNext(), state.showScale.getNextRange(item.startTime))
                                 }
                             }
                         )

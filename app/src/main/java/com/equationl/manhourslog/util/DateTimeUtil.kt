@@ -1,11 +1,16 @@
 package com.equationl.manhourslog.util
 
+import com.equationl.manhourslog.ui.view.list.state.StatisticsShowRange
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
 object DateTimeUtil {
+    const val DAY_MILL_SECOND_TIME = 86400000L
+
+
+
     fun Long.formatTime(): String {
         val base = this / 1000
         val hours = base / 3600
@@ -54,7 +59,50 @@ object DateTimeUtil {
         //当月有多少天
         val maxDate = cal[Calendar.DATE]
 
-        return getWeeOfCurrentMonth() + maxDate * 86400000L
+        return getWeeOfCurrentMonth() + maxDate * DAY_MILL_SECOND_TIME
+    }
+
+    fun getYearRange(year: Int): StatisticsShowRange {
+        val calendar = Calendar.getInstance()
+        calendar[Calendar.YEAR] = year
+        calendar[Calendar.MONTH] = Calendar.JANUARY
+        calendar[Calendar.DAY_OF_MONTH] = 1
+        calendar[Calendar.HOUR_OF_DAY] = 0
+        calendar[Calendar.MINUTE] = 0
+        calendar[Calendar.SECOND] = 0
+        calendar[Calendar.MILLISECOND] = 0
+        val startTimestamp = calendar.timeInMillis // 年初时间戳
+
+        calendar[Calendar.MONTH] = Calendar.DECEMBER
+        calendar[Calendar.DAY_OF_MONTH] = 31
+        calendar[Calendar.HOUR_OF_DAY] = 23
+        calendar[Calendar.MINUTE] = 59
+        calendar[Calendar.SECOND] = 59
+        calendar[Calendar.MILLISECOND] = 999
+        val endTimestamp = calendar.timeInMillis // 年末时间戳
+
+        return StatisticsShowRange(startTimestamp, endTimestamp)
+    }
+
+    fun getMonthRange(year: Int, month: Int): StatisticsShowRange {
+        val calendar = Calendar.getInstance()
+        calendar[Calendar.YEAR] = year
+        calendar[Calendar.MONTH] = month
+        calendar[Calendar.DAY_OF_MONTH] = 1
+        calendar[Calendar.HOUR_OF_DAY] = 0
+        calendar[Calendar.MINUTE] = 0
+        calendar[Calendar.SECOND] = 0
+        calendar[Calendar.MILLISECOND] = 0
+        val startTimestamp = calendar.timeInMillis // 月初时间戳
+
+        calendar.roll(Calendar.DATE, -1)
+        calendar[Calendar.HOUR_OF_DAY] = 23
+        calendar[Calendar.MINUTE] = 59
+        calendar[Calendar.SECOND] = 59
+        calendar[Calendar.MILLISECOND] = 999
+        val endTimestamp = calendar.timeInMillis // 月末时间戳
+
+        return StatisticsShowRange(startTimestamp, endTimestamp)
     }
 
 

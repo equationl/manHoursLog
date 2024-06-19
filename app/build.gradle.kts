@@ -84,6 +84,7 @@ dependencies {
     implementation (libs.gson)
 
     implementation(libs.hilt.android)
+    implementation (libs.dialog.core)
 
     ksp(libs.androidx.room.compiler)
     kapt(libs.hilt.android.compiler)
