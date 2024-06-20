@@ -3,6 +3,7 @@ package com.equationl.manhourslog.ui.view.list.screen
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -50,6 +51,13 @@ import com.equationl.manhourslog.ui.widget.LoadingContent
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import me.bytebeats.views.charts.bar.BarChart
+import me.bytebeats.views.charts.bar.BarChartData
+import me.bytebeats.views.charts.bar.render.bar.SimpleBarDrawer
+import me.bytebeats.views.charts.bar.render.label.SimpleLabelDrawer
+import me.bytebeats.views.charts.bar.render.xaxis.SimpleXAxisDrawer
+import me.bytebeats.views.charts.bar.render.yaxis.SimpleYAxisDrawer
+import me.bytebeats.views.charts.simpleChartAnimation
 
 @Composable
 fun StatisticsScreen(
@@ -141,7 +149,10 @@ private fun HomeContent(
                 state,
                 onChangeScale = onChangeScale
             )
-        StatisticsShowType.Chart -> ChartContent()
+        StatisticsShowType.Chart -> ChartContent(
+            state,
+            onChangeScale = onChangeScale
+        )
     }
 }
 
@@ -164,22 +175,7 @@ private fun ListContent(
         ) {
             LazyColumn {
                 item(key = "headerFilter") {
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    ) {
-                        SingleChoiceSegmentedButtonRow {
-                            StatisticsShowScale.entries.forEachIndexed { index, statisticsShowScale ->
-                                SegmentedButton(selected = statisticsShowScale == state.showScale, onClick = { onChangeScale(statisticsShowScale, null) }, shape = SegmentedButtonDefaults.itemShape(index = index, count = StatisticsShowScale.entries.size),) {
-                                    Text(text = statisticsShowScale.name)
-                                }
-                            }
-                        }
-
-                    }
+                    HeaderFilter(state, onChangeScale)
                 }
 
 
@@ -211,8 +207,60 @@ private fun ListContent(
 }
 
 @Composable
-private fun ChartContent() {
-    // TODO
+private fun ChartContent(
+    state: StatisticsState,
+    onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit
+) {
+    val dataList = state.dataList
+
+    if (dataList.isEmpty()) {
+        ListEmptyContent("Data is Empty")
+    }
+    else {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp, vertical = 32.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                BarChartView(data = state.barChartData)
+            }
+
+//            Column(
+//                modifier = Modifier.fillMaxSize(),
+//                verticalArrangement = Arrangement.Top,
+//                horizontalAlignment = Alignment.CenterHorizontally
+//            ) {
+//                HeaderFilter(state = state, onChangeScale = onChangeScale)
+//            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HeaderFilter(
+    state: StatisticsState,
+    onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit
+) {
+    Row(
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+    ) {
+        SingleChoiceSegmentedButtonRow {
+            StatisticsShowScale.entries.forEachIndexed { index, statisticsShowScale ->
+                SegmentedButton(selected = statisticsShowScale == state.showScale, onClick = { onChangeScale(statisticsShowScale, null) }, shape = SegmentedButtonDefaults.itemShape(index = index, count = StatisticsShowScale.entries.size),) {
+                    Text(text = statisticsShowScale.name)
+                }
+            }
+        }
+
+    }
 }
 
 @Composable
@@ -263,5 +311,26 @@ private fun TodoListGroupHeader(leftText: String, rightText: String = "") {
     ) {
         Text(text = leftText)
         Text(text = rightText)
+    }
+}
+
+@Composable
+private fun BarChartView(data: List<BarChartData.Bar>) {
+    if (data.isEmpty()) {
+        ListEmptyContent(msg = "NO data")
+    }
+    else {
+        val barChartData = BarChartData(bars = data)
+        BarChart(
+            barChartData = barChartData,
+            modifier = Modifier.fillMaxSize(),
+            animation = simpleChartAnimation(),
+            barDrawer = SimpleBarDrawer(),
+            xAxisDrawer = SimpleXAxisDrawer(),
+            yAxisDrawer = SimpleYAxisDrawer(),
+            labelDrawer = SimpleLabelDrawer(
+                drawLocation = SimpleLabelDrawer.DrawLocation.Outside
+            )
+        )
     }
 }

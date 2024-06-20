@@ -7,7 +7,8 @@ import java.util.Date
 import java.util.Locale
 
 object DateTimeUtil {
-    const val DAY_MILL_SECOND_TIME = 86400000L
+    const val DAY_MILL_SECOND_TIME = 86400_000L
+    const val HOUR_MILL_SECOND_TIME = 3600_000L
 
 
 

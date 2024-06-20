@@ -10,8 +10,11 @@ import com.equationl.manhourslog.ui.view.list.state.StatisticsShowRange
 import com.equationl.manhourslog.ui.view.list.state.StatisticsShowScale
 import com.equationl.manhourslog.ui.view.list.state.StatisticsShowType
 import com.equationl.manhourslog.ui.view.list.state.StatisticsState
+import com.equationl.manhourslog.util.DateTimeUtil
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
+import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import com.equationl.manhourslog.util.DateTimeUtil.toTimestamp
+import com.equationl.manhourslog.util.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.bytebeats.views.charts.bar.BarChartData
 import javax.inject.Inject
 
 @HiltViewModel
@@ -69,8 +73,13 @@ class StatisticsViewModel @Inject constructor(
         // TODO
         _uiState.update {
             it.copy(
-                showType = if (it.showType == StatisticsShowType.Chart) StatisticsShowType.List else StatisticsShowType.Chart
+                showType = if (it.showType == StatisticsShowType.Chart) StatisticsShowType.List else StatisticsShowType.Chart,
+                showScale = if (it.showType == StatisticsShowType.List) StatisticsShowScale.Year else it.showScale
             )
+        }
+
+        viewModelScope.launch {
+            loadData()
         }
     }
 
@@ -83,11 +92,24 @@ class StatisticsViewModel @Inject constructor(
         Log.w("el", "loadData: rawData = $rawDataList")
 
         val resolveResult = resolveData(rawDataList)
+        val barChartDataList = arrayListOf<BarChartData.Bar>()
+
+        if (_uiState.value.showType == StatisticsShowType.Chart) {
+            for (item in resolveResult) {
+                val newBar = BarChartData.Bar(
+                    label = "${item.startTime.formatDateTime("yyyy-MM")}(${item.totalTime.formatTime()})",
+                    value = (item.totalTime / DateTimeUtil.HOUR_MILL_SECOND_TIME).toFloat(),
+                    color = Utils.randomColor
+                )
+                barChartDataList.add(newBar)
+            }
+        }
 
         _uiState.update {
             it.copy(
                 isLoading = false,
-                dataList = resolveResult
+                dataList = resolveResult,
+                barChartData = barChartDataList
             )
         }
     }

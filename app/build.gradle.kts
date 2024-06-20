@@ -85,6 +85,7 @@ dependencies {
 
     implementation(libs.hilt.android)
     implementation (libs.dialog.core)
+    implementation(libs.compose.charts)
 
     ksp(libs.androidx.room.compiler)
     kapt(libs.hilt.android.compiler)

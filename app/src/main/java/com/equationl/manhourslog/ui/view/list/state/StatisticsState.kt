@@ -4,6 +4,7 @@ import com.equationl.manhourslog.model.StaticsScreenModel
 import com.equationl.manhourslog.util.DateTimeUtil
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.toTimestamp
+import me.bytebeats.views.charts.bar.BarChartData
 
 data class StatisticsState(
     val isLoading: Boolean = true,
@@ -11,6 +12,7 @@ data class StatisticsState(
     val showType: StatisticsShowType = StatisticsShowType.List,
     val showScale: StatisticsShowScale = StatisticsShowScale.Day,
     val dataList: List<StaticsScreenModel> = listOf(),
+    val barChartData: List<BarChartData.Bar> = listOf()
 )
 
 data class StatisticsShowRange(
