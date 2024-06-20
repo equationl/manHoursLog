@@ -12,9 +12,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -26,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,6 +38,7 @@ import com.equationl.manhourslog.ui.view.LocalNavController
 import com.equationl.manhourslog.ui.view.home.state.HomeState
 import com.equationl.manhourslog.ui.view.home.viewmodel.HomeViewModel
 import com.equationl.manhourslog.ui.widget.LoadingContent
+import com.equationl.manhourslog.ui.widget.PulsatingCircles
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import com.equationl.manhourslog.util.Utils
 import kotlinx.coroutines.Dispatchers
@@ -126,14 +130,20 @@ private fun HomeContent(
         Card(
             onClick = onToggleStart,
             shape = CircleShape,
-            modifier = Modifier.size(200.dp)
+            modifier = Modifier.size(200.dp),
+            colors = CardDefaults.cardColors().copy(containerColor = Color.Transparent)
         ) {
             Column(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxSize()
             ) {
-                Text(text = if (state.logState.isStart) "Finish" else "Start")
+                PulsatingCircles(
+                    text = if (state.logState.isStart) "Finish" else "Start",
+                    isAnimation = state.logState.isStart,
+                    onClick = onToggleStart,
+                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
