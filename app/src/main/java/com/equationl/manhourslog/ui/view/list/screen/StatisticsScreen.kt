@@ -3,6 +3,9 @@ package com.equationl.manhourslog.ui.view.list.screen
 import android.content.pm.ActivityInfo
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,11 +22,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.BackupTable
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.InsertChartOutlined
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +40,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -58,6 +66,7 @@ import com.equationl.manhourslog.ui.widget.LoadingContent
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import kotlinx.coroutines.launch
 import me.bytebeats.views.charts.bar.BarChart
 import me.bytebeats.views.charts.bar.BarChartData
 import me.bytebeats.views.charts.bar.render.bar.SimpleBarDrawer
@@ -71,12 +80,19 @@ fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
     val context = LocalContext.current
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         viewModel.onExport(result, context)
+    }
+
+    val isListScroll by remember{
+        derivedStateOf {
+            state.listState.firstVisibleItemIndex > 0
+        }
     }
 
     Scaffold(
@@ -94,6 +110,23 @@ fun StatisticsScreen(
                     exportLauncher.launch(intent)
                 }
             )
+        },
+        floatingActionButton = {
+            AnimatedVisibility(
+                visible = state.showType == StatisticsShowType.List && isListScroll,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        scope.launch {
+                            state.listState.animateScrollToItem(0)
+                        }
+                    }
+                ) {
+                    Icon(imageVector = Icons.Outlined.ArrowUpward, contentDescription = "Back to top")
+                }
+            }
         }
     ) { innerPadding ->
         Column(
@@ -188,7 +221,7 @@ private fun HomeContent(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ListContent(
     state: StatisticsState,
@@ -205,7 +238,9 @@ private fun ListContent(
             Modifier
                 .fillMaxSize()
         ) {
-            LazyColumn {
+            LazyColumn(
+                state = state.listState
+            ) {
                 item(key = "headerFilter") {
                     HeaderFilter(state, onChangeScale)
                 }

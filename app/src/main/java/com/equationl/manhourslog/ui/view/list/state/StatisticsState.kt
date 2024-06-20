@@ -1,5 +1,6 @@
 package com.equationl.manhourslog.ui.view.list.state
 
+import androidx.compose.foundation.lazy.LazyListState
 import com.equationl.manhourslog.model.StaticsScreenModel
 import com.equationl.manhourslog.util.DateTimeUtil
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
@@ -12,7 +13,8 @@ data class StatisticsState(
     val showType: StatisticsShowType = StatisticsShowType.List,
     val showScale: StatisticsShowScale = StatisticsShowScale.Day,
     val dataList: List<StaticsScreenModel> = listOf(),
-    val barChartData: List<BarChartData.Bar> = listOf()
+    val barChartData: List<BarChartData.Bar> = listOf(),
+    val listState: LazyListState = LazyListState()
 )
 
 data class StatisticsShowRange(
