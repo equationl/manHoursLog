@@ -1,5 +1,6 @@
 package com.equationl.manhourslog.ui.view.list.screen
 
+import android.content.pm.ActivityInfo
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -33,6 +34,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,7 +86,9 @@ fun StatisticsScreen(
                 showType = state.showType,
                 iniDateRangeValue = state.showRange,
                 onFilterDateRange = viewModel::onFilterShowRange,
-                onChangeShowType = viewModel::onChangeShowType,
+                onChangeShowType = {
+                    viewModel.onChangeShowType(context)
+                },
                 onExport = {
                     val intent = viewModel.createNewDocumentIntent()
                     exportLauncher.launch(intent)
@@ -103,7 +107,10 @@ fun StatisticsScreen(
             else {
                 HomeContent(
                     state,
-                    onChangeScale = viewModel::changeShowScale
+                    onChangeScale = viewModel::changeShowScale,
+                    changeScreenOrientation = {
+                        viewModel.changeScreenOrientation(context, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+                    }
                 )
             }
         }
@@ -165,6 +172,7 @@ private fun TopBar(
 private fun HomeContent(
     state: StatisticsState,
     onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
+    changeScreenOrientation: () -> Unit
 ) {
     when (state.showType) {
         StatisticsShowType.List ->
@@ -174,7 +182,8 @@ private fun HomeContent(
             )
         StatisticsShowType.Chart -> ChartContent(
             state,
-            onChangeScale = onChangeScale
+            onChangeScale = onChangeScale,
+            changeScreenOrientation = changeScreenOrientation
         )
     }
 }
@@ -232,9 +241,17 @@ private fun ListContent(
 @Composable
 private fun ChartContent(
     state: StatisticsState,
-    onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit
+    onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
+    changeScreenOrientation: () -> Unit
 ) {
     val dataList = state.dataList
+
+    DisposableEffect(key1 = state.showType) {
+        onDispose {
+            changeScreenOrientation()
+        }
+    }
+
 
     if (dataList.isEmpty()) {
         ListEmptyContent("Data is Empty")
