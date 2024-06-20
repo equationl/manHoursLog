@@ -1,5 +1,6 @@
 package com.equationl.manhourslog.ui.view.home.screen
 
+import android.content.pm.ActivityInfo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,6 +36,7 @@ import com.equationl.manhourslog.ui.view.home.state.HomeState
 import com.equationl.manhourslog.ui.view.home.viewmodel.HomeViewModel
 import com.equationl.manhourslog.ui.widget.LoadingContent
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
+import com.equationl.manhourslog.util.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -42,7 +45,12 @@ import kotlinx.coroutines.withContext
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        Utils.changeScreenOrientation(context, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

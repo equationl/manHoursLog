@@ -1,6 +1,5 @@
 package com.equationl.manhourslog.ui.view.list.screen
 
-import android.content.pm.ActivityInfo
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -39,7 +38,6 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -141,9 +139,6 @@ fun StatisticsScreen(
                 HomeContent(
                     state,
                     onChangeScale = viewModel::changeShowScale,
-                    changeScreenOrientation = {
-                        viewModel.changeScreenOrientation(context, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-                    }
                 )
             }
         }
@@ -205,7 +200,6 @@ private fun TopBar(
 private fun HomeContent(
     state: StatisticsState,
     onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
-    changeScreenOrientation: () -> Unit
 ) {
     when (state.showType) {
         StatisticsShowType.List ->
@@ -215,8 +209,7 @@ private fun HomeContent(
             )
         StatisticsShowType.Chart -> ChartContent(
             state,
-            onChangeScale = onChangeScale,
-            changeScreenOrientation = changeScreenOrientation
+            onChangeScale = onChangeScale
         )
     }
 }
@@ -276,17 +269,9 @@ private fun ListContent(
 @Composable
 private fun ChartContent(
     state: StatisticsState,
-    onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
-    changeScreenOrientation: () -> Unit
+    onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit
 ) {
     val dataList = state.dataList
-
-    DisposableEffect(key1 = state.showType) {
-        onDispose {
-            changeScreenOrientation()
-        }
-    }
-
 
     if (dataList.isEmpty()) {
         ListEmptyContent("Data is Empty")

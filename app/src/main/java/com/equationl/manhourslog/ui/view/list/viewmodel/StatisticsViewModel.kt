@@ -20,7 +20,6 @@ import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import com.equationl.manhourslog.util.DateTimeUtil.toTimestamp
 import com.equationl.manhourslog.util.Utils
-import com.equationl.manhourslog.util.Utils.findActivity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -117,13 +116,6 @@ class StatisticsViewModel @Inject constructor(
     }
 
     fun onChangeShowType(context: Context) {
-        if (_uiState.value.showType == StatisticsShowType.List) {
-            changeScreenOrientation(context, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-        }
-        else {
-            changeScreenOrientation(context, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-        }
-
         _uiState.update {
             it.copy(
                 showType = if (it.showType == StatisticsShowType.Chart) StatisticsShowType.List else StatisticsShowType.Chart,
@@ -131,15 +123,16 @@ class StatisticsViewModel @Inject constructor(
             )
         }
 
+        if (_uiState.value.showType == StatisticsShowType.Chart) {
+            Utils.changeScreenOrientation(context, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        }
+        else {
+            Utils.changeScreenOrientation(context, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+        }
+
         viewModelScope.launch {
             loadData()
         }
-    }
-
-    fun changeScreenOrientation(context: Context, orientation: Int) {
-        val activity = context.findActivity() ?: return
-        //val originalOrientation = activity.requestedOrientation
-        activity.requestedOrientation = orientation
     }
 
     fun createNewDocumentIntent(): Intent {
