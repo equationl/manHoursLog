@@ -1,6 +1,10 @@
 package com.equationl.manhourslog.ui.view.list.viewmodel
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.equationl.manhourslog.database.DBManHoursTable
@@ -25,6 +29,7 @@ import kotlinx.coroutines.withContext
 import me.bytebeats.views.charts.bar.BarChartData
 import javax.inject.Inject
 
+
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
     private val db: ManHoursDB
@@ -44,7 +49,7 @@ class StatisticsViewModel @Inject constructor(
     }
 
     fun changeShowScale(newScale: StatisticsShowScale, newRange: StatisticsShowRange?) {
-        Log.w("el", "changeShowScale: scale = $newScale, range = $newRange", )
+        Log.w("el", "changeShowScale: scale = $newScale, range = $newRange")
 
 
         _uiState.update {
@@ -69,8 +74,47 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
+    fun onExport(result: ActivityResult, context: Context) {
+        val data = result.data
+        val uri = data?.data
+        uri?.let {
+            context.contentResolver.openOutputStream(it)?.let {outputStream ->
+                viewModelScope.launch(Dispatchers.IO) {
+                    _uiState.value.dataList.forEachIndexed { index, model ->
+                        when (_uiState.value.showScale) {
+                            StatisticsShowScale.Year -> {
+                                if (index == 0) {
+                                    outputStream.write("Month,Total Man Hours\n".toByteArray())
+                                }
+                                outputStream.write("${model.startTime.formatDateTime("yyyy-MM")},${model.totalTime.formatTime()}\n".toByteArray())
+                            }
+                            StatisticsShowScale.Month -> {
+                                if (index == 0) {
+                                    outputStream.write("Day,Total Man Hours\n".toByteArray())
+                                }
+                                outputStream.write("${model.startTime.formatDateTime("yyyy-MM-dd")},${model.totalTime.formatTime()}\n".toByteArray())
+                            }
+                            StatisticsShowScale.Day -> {
+                                if (index == 0) {
+                                    outputStream.write("Start Time,End Time,Total Man Hours\n".toByteArray())
+                                }
+                                outputStream.write("${model.startTime.formatDateTime()},${model.endTime.formatDateTime()},${model.totalTime.formatTime()}\n".toByteArray())
+                            }
+                        }
+                    }
+
+                    outputStream.flush()
+                    outputStream.close()
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Export finish", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
     fun onChangeShowType() {
-        // TODO
         _uiState.update {
             it.copy(
                 showType = if (it.showType == StatisticsShowType.Chart) StatisticsShowType.List else StatisticsShowType.Chart,
@@ -81,6 +125,18 @@ class StatisticsViewModel @Inject constructor(
         viewModelScope.launch {
             loadData()
         }
+    }
+
+    fun createNewDocumentIntent(): Intent {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/comma-separated-values"
+            putExtra(Intent.EXTRA_TITLE, "manHoursLog_${System.currentTimeMillis().formatDateTime("yyyy_MM_dd_HH_mm_ss")}.csv")
+        }
+        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.setFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        return intent
     }
 
     private suspend fun loadData() = withContext(Dispatchers.IO) {

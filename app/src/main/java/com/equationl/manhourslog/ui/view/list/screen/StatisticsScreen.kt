@@ -1,11 +1,14 @@
 package com.equationl.manhourslog.ui.view.list.screen
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,8 +18,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.outlined.BackupTable
 import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.PieChartOutline
+import androidx.compose.material.icons.outlined.InsertChartOutlined
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -65,6 +70,13 @@ fun StatisticsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.onExport(result, context)
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -72,7 +84,11 @@ fun StatisticsScreen(
                 showType = state.showType,
                 iniDateRangeValue = state.showRange,
                 onFilterDateRange = viewModel::onFilterShowRange,
-                onChangeShowType = viewModel::onChangeShowType
+                onChangeShowType = viewModel::onChangeShowType,
+                onExport = {
+                    val intent = viewModel.createNewDocumentIntent()
+                    exportLauncher.launch(intent)
+                }
             )
         }
     ) { innerPadding ->
@@ -101,6 +117,7 @@ private fun TopBar(
     iniDateRangeValue: StatisticsShowRange,
     onFilterDateRange: (value: StatisticsShowRange) -> Unit,
     onChangeShowType: () -> Unit,
+    onExport: () -> Unit,
 ) {
     val navController = LocalNavController.current
     val dialogState = rememberMaterialDialogState()
@@ -128,8 +145,14 @@ private fun TopBar(
             }
             IconButton(onClick = onChangeShowType) {
                 Icon(
-                    if (showType == StatisticsShowType.List) Icons.Outlined.PieChartOutline else Icons.AutoMirrored.Outlined.List,
+                    if (showType == StatisticsShowType.List) Icons.Outlined.InsertChartOutlined else Icons.AutoMirrored.Outlined.List,
                     contentDescription = "show type"
+                )
+            }
+            IconButton(onClick = onExport) {
+                Icon(
+                    Icons.Outlined.BackupTable,
+                    contentDescription = "export data"
                 )
             }
         }
@@ -221,7 +244,9 @@ private fun ChartContent(
             modifier = Modifier.fillMaxSize()
         ) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp, vertical = 32.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp, vertical = 32.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -261,6 +286,8 @@ private fun HeaderFilter(
         }
 
     }
+
+    Spacer(modifier = Modifier.height(16.dp))
 }
 
 @Composable
