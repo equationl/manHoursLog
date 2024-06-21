@@ -9,6 +9,8 @@ import java.util.Locale
 object DateTimeUtil {
     const val DAY_MILL_SECOND_TIME = 86400_000L
     const val HOUR_MILL_SECOND_TIME = 3600_000L
+    const val MINUTE_MILL_SECOND_TIME = 60_000L
+    const val SECOND_MILL_SECOND_TIME = 1_000L
 
 
 
@@ -21,6 +23,16 @@ object DateTimeUtil {
         return "${hours.toString().padStart(2, '0')}" +
                 ":${minutes.toString().padStart(2, '0')}" +
                 ":${seconds.toString().padStart(2, '0')}"
+    }
+
+    fun String.timeToTimeStamp(): Long {
+        var result = 0L
+        val splitList = this.split(":")
+        result += (splitList[0].toLongOrNull() ?: 0) * HOUR_MILL_SECOND_TIME
+        result += (splitList[1].toLongOrNull() ?: 0) * MINUTE_MILL_SECOND_TIME
+        result += (splitList[2].toLongOrNull() ?: 0) * SECOND_MILL_SECOND_TIME
+
+        return result
     }
 
     fun Long.formatDateTime(format: String = "yyyy-MM-dd HH:mm:ss"): String {

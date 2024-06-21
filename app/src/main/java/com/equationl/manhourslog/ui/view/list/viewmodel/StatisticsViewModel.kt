@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.equationl.manhourslog.constants.ExportHeader
 import com.equationl.manhourslog.database.DBManHoursTable
 import com.equationl.manhourslog.database.ManHoursDB
 import com.equationl.manhourslog.model.StaticsScreenModel
@@ -18,6 +19,7 @@ import com.equationl.manhourslog.ui.view.list.state.StatisticsState
 import com.equationl.manhourslog.util.DateTimeUtil
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
+import com.equationl.manhourslog.util.DateTimeUtil.timeToTimeStamp
 import com.equationl.manhourslog.util.DateTimeUtil.toTimestamp
 import com.equationl.manhourslog.util.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -75,6 +77,58 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
+    fun onImport(result: ActivityResult, context: Context) {
+        val data = result.data
+        val uri = data?.data
+
+        uri?.let {
+            viewModelScope.launch(Dispatchers.IO) {
+                var isHeader = true
+                val buffer = context.contentResolver.openInputStream(it)?.bufferedReader()
+                buffer?.useLines {
+                    for (line in it) {
+                        Log.i("el", "onImport: line = .$line.")
+                        if (isHeader) {
+                            if (line != ExportHeader.DAY.replace("\n", "")) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Only support import day's detail .csv file", Toast.LENGTH_SHORT).show()
+                                }
+                                return@launch
+                            }
+                            isHeader = false
+                        }
+                        else {
+                            try {
+                                val lineSplit = line.split(",")
+                                val insertData = DBManHoursTable(
+                                    startTime = lineSplit[0].toTimestamp(),
+                                    endTime = lineSplit[1].toTimestamp(),
+                                    totalTime = lineSplit[2].timeToTimeStamp()
+                                )
+
+                                // FIXME 没有处理重复数据
+                                val insertResult = db.manHoursDB().insertData(insertData)
+
+                                Log.i("el", "onImport: insetData = $insertData, result = $insertResult")
+                            } catch (tr: Throwable) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Import fail: $tr", Toast.LENGTH_SHORT).show()
+                                }
+                                Log.e("el", "onImport: ", tr)
+                            }
+                        }
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Import Finish", Toast.LENGTH_SHORT).show()
+                }
+
+                loadData()
+            }
+        }
+    }
+
     fun onExport(result: ActivityResult, context: Context) {
         val data = result.data
         val uri = data?.data
@@ -85,19 +139,19 @@ class StatisticsViewModel @Inject constructor(
                         when (_uiState.value.showScale) {
                             StatisticsShowScale.Year -> {
                                 if (index == 0) {
-                                    outputStream.write("Month,Total Man Hours\n".toByteArray())
+                                    outputStream.write(ExportHeader.YEAR.toByteArray())
                                 }
                                 outputStream.write("${model.startTime.formatDateTime("yyyy-MM")},${model.totalTime.formatTime()}\n".toByteArray())
                             }
                             StatisticsShowScale.Month -> {
                                 if (index == 0) {
-                                    outputStream.write("Day,Total Man Hours\n".toByteArray())
+                                    outputStream.write(ExportHeader.MONTH.toByteArray())
                                 }
                                 outputStream.write("${model.startTime.formatDateTime("yyyy-MM-dd")},${model.totalTime.formatTime()}\n".toByteArray())
                             }
                             StatisticsShowScale.Day -> {
                                 if (index == 0) {
-                                    outputStream.write("Start Time,End Time,Total Man Hours\n".toByteArray())
+                                    outputStream.write(ExportHeader.DAY.toByteArray())
                                 }
                                 outputStream.write("${model.startTime.formatDateTime()},${model.endTime.formatDateTime()},${model.totalTime.formatTime()}\n".toByteArray())
                             }
@@ -144,6 +198,16 @@ class StatisticsViewModel @Inject constructor(
         intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         intent.setFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
         intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        return intent
+    }
+
+    fun createReadDocumentIntent(): Intent {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/comma-separated-values"
+
+            // putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri)
+        }
         return intent
     }
 

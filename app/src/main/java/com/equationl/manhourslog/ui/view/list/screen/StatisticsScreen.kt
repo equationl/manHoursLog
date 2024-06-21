@@ -24,8 +24,12 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.BackupTable
 import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.ImportContacts
 import androidx.compose.material.icons.outlined.InsertChartOutlined
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -40,8 +44,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -87,6 +93,12 @@ fun StatisticsScreen(
         viewModel.onExport(result, context)
     }
 
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        viewModel.onImport(result, context)
+    }
+
     val isListScroll by remember{
         derivedStateOf {
             state.listState.firstVisibleItemIndex > 0
@@ -106,6 +118,10 @@ fun StatisticsScreen(
                 onExport = {
                     val intent = viewModel.createNewDocumentIntent()
                     exportLauncher.launch(intent)
+                },
+                onImport = {
+                    val intent = viewModel.createReadDocumentIntent()
+                    importLauncher.launch(intent)
                 }
             )
         },
@@ -153,9 +169,11 @@ private fun TopBar(
     onFilterDateRange: (value: StatisticsShowRange) -> Unit,
     onChangeShowType: () -> Unit,
     onExport: () -> Unit,
+    onImport: () -> Unit,
 ) {
     val navController = LocalNavController.current
     val dialogState = rememberMaterialDialogState()
+    var isExpandMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
         title = {
@@ -184,16 +202,63 @@ private fun TopBar(
                     contentDescription = "show type"
                 )
             }
-            IconButton(onClick = onExport) {
+            IconButton(
+                onClick = {
+                    isExpandMenu = true
+                }
+            ) {
                 Icon(
-                    Icons.Outlined.BackupTable,
-                    contentDescription = "export data"
+                    Icons.Outlined.MoreVert,
+                    contentDescription = "more function"
                 )
             }
+
+            TopBarMoreFunction(
+                expanded = isExpandMenu,
+                onDismissRequest = { isExpandMenu = !isExpandMenu },
+                onClickExport = {
+                    isExpandMenu = false
+                    onExport()
+                },
+                onClickImport = {
+                    isExpandMenu = false
+                    onImport()
+                }
+            )
         }
     )
 
     DateTimeRangePickerDialog(showState = dialogState, initValue = iniDateRangeValue, onFilterDate = onFilterDateRange)
+}
+
+@Composable
+private fun TopBarMoreFunction(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    onClickExport: () -> Unit,
+    onClickImport: () -> Unit
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismissRequest) {
+        DropdownMenuItem(
+            text = {
+                Text(text = "Export Data To .csv")
+            },
+            onClick = onClickExport,
+            leadingIcon = {
+                Icon(imageVector = Icons.Outlined.BackupTable, contentDescription = "export")
+            }
+        )
+        DropdownMenuItem(
+            text = {
+                Text(text = "Import Data From .csv")
+            },
+            onClick = onClickImport,
+            leadingIcon = {
+                Icon(imageVector = Icons.Outlined.ImportContacts, contentDescription = "import")
+            }
+        )
+    }
+
 }
 
 @Composable
