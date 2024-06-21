@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.BackupTable
 import androidx.compose.material.icons.outlined.DateRange
@@ -39,8 +40,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -155,6 +159,7 @@ fun StatisticsScreen(
                 HomeContent(
                     state,
                     onChangeScale = viewModel::changeShowScale,
+                    onClickDeleteItem = viewModel::onClickDeleteItem
                 )
             }
         }
@@ -265,12 +270,14 @@ private fun TopBarMoreFunction(
 private fun HomeContent(
     state: StatisticsState,
     onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
+    onClickDeleteItem: (id: Int) -> Unit
 ) {
     when (state.showType) {
         StatisticsShowType.List ->
             ListContent(
                 state,
-                onChangeScale = onChangeScale
+                onChangeScale = onChangeScale,
+                onClickDeleteItem = onClickDeleteItem
             )
         StatisticsShowType.Chart -> ChartContent(
             state,
@@ -284,6 +291,7 @@ private fun HomeContent(
 private fun ListContent(
     state: StatisticsState,
     onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
+    onClickDeleteItem: (id: Int) -> Unit
 ) {
 
     val dataList = state.dataList
@@ -314,15 +322,24 @@ private fun ListContent(
                         lastTitle = item.headerTitle
                     }
                     item(key = item.id) {
-                        ListItem(
-                            item,
-                            currentScale = state.showScale,
-                            onClickCard = {
-                                if (state.showScale != StatisticsShowScale.Day) {
-                                    onChangeScale(state.showScale.getNext(), state.showScale.getNextRange(item.startTime))
+                        if (state.showScale == StatisticsShowScale.Day) {
+                            SwipeAbleListItem(
+                                item,
+                                currentScale = state.showScale,
+                                onClickDeleteItem = {
+                                    onClickDeleteItem(item.id)
                                 }
-                            }
-                        )
+                            )
+                        }
+                        else {
+                            ListItem(
+                                item,
+                                currentScale = state.showScale,
+                                onClickCard = {
+                                        onChangeScale(state.showScale.getNext(), state.showScale.getNextRange(item.startTime))
+                                }
+                            )
+                        }
                     }
 
                 }
@@ -392,39 +409,100 @@ private fun HeaderFilter(
     Spacer(modifier = Modifier.height(16.dp))
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeAbleListItem(
+    item: StaticsScreenModel,
+    currentScale: StatisticsShowScale,
+    onClickDeleteItem: () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onClickDeleteItem()
+                true
+            }
+            else {
+                false
+            }
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            Row(
+                Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .padding(8.dp)
+                    .background(MaterialTheme.colorScheme.error),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Swipe To Delete", color = MaterialTheme.colorScheme.background)
+                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.background)
+            }
+        },
+        content = {
+            ListItem(item, currentScale, null)
+        },
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+    )
+}
+
 @Composable
 private fun ListItem(
     item: StaticsScreenModel,
     currentScale: StatisticsShowScale,
-    onClickCard: () -> Unit
+    onClickCard: (() -> Unit)?
 ) {
-    Card(
-        onClick = onClickCard,
-        modifier = Modifier.padding(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .padding(8.dp)
+    if (onClickCard == null) {
+        Card(
+            modifier = Modifier.padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                if (currentScale == StatisticsShowScale.Day) {
-                    Text(text = "Start Time: ${item.startTime.formatDateTime()}")
-                    Text(text = "End Time: ${item.endTime.formatDateTime()}")
-                }
-                else {
-                    Text(text = "Date: ${item.startTime.formatDateTime(format = if (currentScale == StatisticsShowScale.Month) "yyyy-MM-dd" else "yyyy-MM")}")
-                }
-            }
-
-            Text(text = item.totalTime.formatTime(), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
+            ListCardContent(item = item, currentScale = currentScale)
         }
+    }
+    else {
+        Card(
+            onClick = onClickCard,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            ListCardContent(item = item, currentScale = currentScale)
+        }
+    }
+}
+
+@Composable
+private fun ListCardContent(
+    item: StaticsScreenModel,
+    currentScale: StatisticsShowScale,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .padding(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxHeight(),
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            if (currentScale == StatisticsShowScale.Day) {
+                Text(text = "Start Time: ${item.startTime.formatDateTime()}")
+                Text(text = "End Time: ${item.endTime.formatDateTime()}")
+            }
+            else {
+                Text(text = "Date: ${item.startTime.formatDateTime(format = if (currentScale == StatisticsShowScale.Month) "yyyy-MM-dd" else "yyyy-MM")}")
+            }
+        }
+
+        Text(text = item.totalTime.formatTime(), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
     }
 }
 

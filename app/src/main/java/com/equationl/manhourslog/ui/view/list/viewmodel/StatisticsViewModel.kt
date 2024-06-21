@@ -51,6 +51,20 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
+    fun onClickDeleteItem(id: Int) {
+        viewModelScope.launch {
+            db.manHoursDB().deleteRowById(id)
+            // loadData()
+            _uiState.update { state ->
+                val newList = arrayListOf<StaticsScreenModel>()
+                newList.addAll(state.dataList)
+                newList.removeIf { it.id == id }
+                state.copy(dataList = newList)
+            }
+        }
+    }
+
+
     fun changeShowScale(newScale: StatisticsShowScale, newRange: StatisticsShowRange?) {
         Log.w("el", "changeShowScale: scale = $newScale, range = $newRange")
 

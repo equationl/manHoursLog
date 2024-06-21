@@ -9,6 +9,9 @@ interface ManHoursDao{
     @Insert
     suspend fun insertData(data: DBManHoursTable): Long
 
+    @Query("DELETE FROM man_hours_table WHERE id = :id")
+    suspend fun deleteRowById(id: Int): Int
+
     @Query("SELECT SUM(total_Time) FROM man_hours_table WHERE start_Time BETWEEN :startTime AND :endTime")
     suspend fun queryRangeTotalTime(startTime: Long, endTime: Long): Long
 
