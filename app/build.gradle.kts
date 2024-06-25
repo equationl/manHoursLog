@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.google.dagger.hilt.android)
     alias(libs.plugins.compose.compiler)
-    id("kotlin-kapt")
 }
 
 android {
@@ -23,10 +22,8 @@ android {
             useSupportLibrary = true
         }
 
-        kapt {
-            arguments {
-                arg("room.schemaLocation", "$projectDir/schemas")
-            }
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
 
@@ -89,7 +86,8 @@ dependencies {
     implementation(libs.compose.charts)
 
     ksp(libs.androidx.room.compiler)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.dagger.compiler)
+    ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
