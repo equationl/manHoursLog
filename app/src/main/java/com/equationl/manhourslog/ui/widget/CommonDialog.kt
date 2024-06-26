@@ -30,7 +30,7 @@ fun DateTimeRangePickerDialog(
                 onFilterDate(StatisticsShowRange(state.selectedStartDateMillis ?: 0L, state.selectedEndDateMillis ?: 0L))
             }
             negativeButton("Cancel")
-            button("Reset") {
+            button("All") {
                 // state.setSelection(DateTimeUtil.getWeeOfCurrentMonth(), DateTimeUtil.getCurrentMonthEnd())
                 state.setSelection(0L, System.currentTimeMillis())
             }

@@ -6,6 +6,7 @@ import com.equationl.manhourslog.database.DBManHoursTable
 import com.equationl.manhourslog.database.ManHoursDB
 import com.equationl.manhourslog.ui.view.home.state.HomeState
 import com.equationl.manhourslog.ui.view.home.state.LogState
+import com.equationl.manhourslog.util.DateTimeUtil
 import com.equationl.manhourslog.util.datastore.DataKey
 import com.equationl.manhourslog.util.datastore.DataStoreUtils
 import com.equationl.manhourslog.util.fromJson
@@ -78,9 +79,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             var d: Long = Date().time
             val offset: Int = TimeZone.getDefault().getOffset(d)
-            d = ((d + offset) / 86400000L) * 86400000L - offset
+            d = ((d + offset) / DateTimeUtil.DAY_MILL_SECOND_TIME) * DateTimeUtil.DAY_MILL_SECOND_TIME - offset
 
-            val totalManHours = db.manHoursDB().queryRangeTotalTime(startTime = d, endTime = d + 86400000L)
+            val totalManHours = db.manHoursDB().queryRangeTotalTime(startTime = d, endTime = d + DateTimeUtil.DAY_MILL_SECOND_TIME)
 
             _uiState.update { it.copy(totalManHours = totalManHours) }
         }

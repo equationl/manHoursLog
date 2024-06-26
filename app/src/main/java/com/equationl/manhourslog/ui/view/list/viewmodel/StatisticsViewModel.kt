@@ -292,7 +292,7 @@ class StatisticsViewModel @Inject constructor(
             StatisticsShowScale.Year -> {
                 val tempMap = mutableMapOf<String, DBManHoursTable>()
                 for (item in rawDataList) {
-                    val tempKey = item.startTime.formatDateTime("yyyy")
+                    val tempKey = item.startTime.formatDateTime("yyyy-MM")
                     tempMap[tempKey] = item
                 }
 
