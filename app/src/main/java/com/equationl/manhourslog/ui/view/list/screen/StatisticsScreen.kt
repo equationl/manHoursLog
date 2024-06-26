@@ -36,6 +36,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -43,8 +44,11 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -194,12 +198,24 @@ private fun TopBar(
             }
         },
         actions = {
-            IconButton(
-                onClick = {
-                    dialogState.show()
-                }
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                tooltip = {
+                    PlainTooltip {
+                        Text(
+                            text = "From ${iniDateRangeValue.start.formatDateTime("yyyy-MM-dd")} To ${iniDateRangeValue.end.formatDateTime("yyyy-MM-dd")}"
+                        )
+                    }
+                },
+                state = rememberTooltipState(isPersistent = true)
             ) {
-                Icon(Icons.Outlined.DateRange, contentDescription = "date filter")
+                IconButton(
+                    onClick = {
+                        dialogState.show()
+                    }
+                ) {
+                    Icon(Icons.Outlined.DateRange, contentDescription = "date filter")
+                }
             }
             IconButton(onClick = onChangeShowType) {
                 Icon(
@@ -398,7 +414,7 @@ private fun HeaderFilter(
     ) {
         SingleChoiceSegmentedButtonRow {
             StatisticsShowScale.entries.forEachIndexed { index, statisticsShowScale ->
-                SegmentedButton(selected = statisticsShowScale == state.showScale, onClick = { onChangeScale(statisticsShowScale, null) }, shape = SegmentedButtonDefaults.itemShape(index = index, count = StatisticsShowScale.entries.size),) {
+                SegmentedButton(selected = statisticsShowScale == state.showScale, onClick = { onChangeScale(statisticsShowScale, null) }, shape = SegmentedButtonDefaults.itemShape(index = index, count = StatisticsShowScale.entries.size)) {
                     Text(text = statisticsShowScale.name)
                 }
             }
