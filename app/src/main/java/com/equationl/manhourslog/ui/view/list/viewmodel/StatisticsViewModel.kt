@@ -53,7 +53,7 @@ class StatisticsViewModel @Inject constructor(
 
     fun onClickDeleteItem(id: Int) {
         viewModelScope.launch {
-            db.manHoursDB().deleteRowById(id)
+            db.manHoursDB().markDeleteRowById(id)
             // loadData()
             _uiState.update { state ->
                 val newList = arrayListOf<StaticsScreenModel>()
@@ -101,7 +101,7 @@ class StatisticsViewModel @Inject constructor(
                 val buffer = context.contentResolver.openInputStream(it)?.bufferedReader()
                 buffer?.useLines {
                     for (line in it) {
-                        Log.i("el", "onImport: line = .$line.")
+                        //Log.i("el", "onImport: line = .$line.")
                         if (isHeader) {
                             if (line != ExportHeader.DAY.replace("\n", "")) {
                                 withContext(Dispatchers.Main) {
@@ -122,8 +122,9 @@ class StatisticsViewModel @Inject constructor(
 
                                 // FIXME 没有处理重复数据
                                 val insertResult = db.manHoursDB().insertData(insertData)
-
-                                Log.i("el", "onImport: insetData = $insertData, result = $insertResult")
+                                if (insertResult <= 0) {
+                                    Log.w("el", "onImport: insetData = $insertData, result = $insertResult")
+                                }
                             } catch (tr: Throwable) {
                                 withContext(Dispatchers.Main) {
                                     Toast.makeText(context, "Import fail: $tr", Toast.LENGTH_SHORT).show()
@@ -231,7 +232,7 @@ class StatisticsViewModel @Inject constructor(
 
         val rawDataList = db.manHoursDB().queryRangeDataList(_uiState.value.showRange.start, _uiState.value.showRange.end, 1, Int.MAX_VALUE)
 
-        Log.w("el", "loadData: rawData = $rawDataList")
+        Log.w("el", "loadData(${_uiState.value.showRange.start}, ${_uiState.value.showRange.end}, 1, ${Int.MAX_VALUE}): rawData = $rawDataList")
 
         val resolveResult = resolveData(rawDataList)
         val barChartDataList = arrayListOf<BarChartData.Bar>()

@@ -13,5 +13,7 @@ data class DBManHoursTable (
     @ColumnInfo(name = "end_Time")
     var endTime: Long,
     @ColumnInfo(name = "total_Time")
-    var totalTime: Long
+    var totalTime: Long,
+    @ColumnInfo(name = "delete_flag", defaultValue = "0")
+    var isDelete: Boolean = false,
 )

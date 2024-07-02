@@ -1,6 +1,7 @@
 package com.equationl.manhourslog.database
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -9,8 +10,11 @@ import androidx.room.RoomDatabase
     entities = [
         DBManHoursTable::class,
     ],
-    version = 1,
-    exportSchema = true
+    version = 2,
+    exportSchema = true,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2)
+    ]
 )
 //@TypeConverters(DBConverters::class)
 abstract class ManHoursDB : RoomDatabase() {
@@ -22,7 +26,7 @@ abstract class ManHoursDB : RoomDatabase() {
                 Room.databaseBuilder(context, ManHoursDB::class.java, "man_hours_data.db")
             }
             return databaseBuilder
-                .fallbackToDestructiveMigration()
+                //.fallbackToDestructiveMigration()
                 .build()
         }
     }
