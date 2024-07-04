@@ -554,8 +554,8 @@ private fun ListCardContent(
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             if (currentScale == StatisticsShowScale.Day) {
-                Text(text = "Start Time: ${item.startTime.formatDateTime()}")
-                Text(text = "End Time: ${item.endTime.formatDateTime()}")
+                Text(text = "Start at: ${item.startTime.formatDateTime()}", style = MaterialTheme.typography.bodyMedium)
+                Text(text = "Finish at: ${item.endTime.formatDateTime()}", style = MaterialTheme.typography.bodyMedium)
             }
             else {
                 Text(text = "Date: ${item.startTime.formatDateTime(format = if (currentScale == StatisticsShowScale.Month) "yyyy-MM-dd" else "yyyy-MM")}")
