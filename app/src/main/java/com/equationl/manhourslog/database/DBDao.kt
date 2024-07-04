@@ -12,6 +12,9 @@ interface ManHoursDao{
     @Query("UPDATE man_hours_table SET delete_flag = 1 WHERE id = :id")
     suspend fun markDeleteRowById(id: Int): Int
 
+    @Query("UPDATE man_hours_table SET note_text = :newValue WHERE id = :id")
+    suspend fun updateNoteById(id: Int, newValue: String): Int
+
     @Query("SELECT SUM(total_Time) FROM man_hours_table WHERE (start_Time BETWEEN :startTime AND :endTime) AND delete_flag=0")
     suspend fun queryRangeTotalTime(startTime: Long, endTime: Long): Long
 

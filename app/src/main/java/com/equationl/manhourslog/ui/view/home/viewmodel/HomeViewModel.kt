@@ -48,7 +48,8 @@ class HomeViewModel @Inject constructor(
                         DBManHoursTable(
                             startTime = it.logState.startTime ?: 0L,
                             endTime = currentTime,
-                            totalTime = currentTime - (it.logState.startTime ?: 0L)
+                            totalTime = currentTime - (it.logState.startTime ?: 0L),
+                            noteText = it.noteValue.ifBlank { null }
                         )
                     )
 
@@ -62,6 +63,12 @@ class HomeViewModel @Inject constructor(
                 DataStoreUtils.saveSyncStringData(DataKey.LOG_STATE, newLogState.toJson())
                 it.copy(logState = newLogState)
             }
+        }
+    }
+
+    fun onNoteChange(value: String) {
+        _uiState.update {
+            it.copy(noteValue = value)
         }
     }
 

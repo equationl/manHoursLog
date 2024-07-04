@@ -51,6 +51,21 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
+    fun onChangeNote(value: String, id: Int) {
+        viewModelScope.launch {
+            db.manHoursDB().updateNoteById(id, value)
+            _uiState.update { state ->
+                val newList = arrayListOf<StaticsScreenModel>()
+                newList.addAll(state.dataList)
+                val editValue = newList.find { it.id == id }
+                if (editValue != null) {
+                    editValue.note = value
+                }
+                state.copy(dataList = newList)
+            }
+        }
+    }
+
     fun onClickDeleteItem(id: Int) {
         viewModelScope.launch {
             db.manHoursDB().markDeleteRowById(id)
@@ -103,7 +118,8 @@ class StatisticsViewModel @Inject constructor(
                     for (line in it) {
                         //Log.i("el", "onImport: line = .$line.")
                         if (isHeader) {
-                            if (line != ExportHeader.DAY.replace("\n", "")) {
+                            // 这里为了兼容旧版本格式改为使用字段数量判断而不是直接匹配列表头
+                            if (line.split(",").size < 3) {
                                 withContext(Dispatchers.Main) {
                                     Toast.makeText(context, "Only support import day's detail .csv file", Toast.LENGTH_SHORT).show()
                                 }
@@ -117,7 +133,8 @@ class StatisticsViewModel @Inject constructor(
                                 val insertData = DBManHoursTable(
                                     startTime = lineSplit[0].toTimestamp(),
                                     endTime = lineSplit[1].toTimestamp(),
-                                    totalTime = lineSplit[2].timeToTimeStamp()
+                                    totalTime = lineSplit[2].timeToTimeStamp(),
+                                    noteText = lineSplit.getOrNull(3) // 兼容旧版本，最后一列可能为空
                                 )
 
                                 // FIXME 没有处理重复数据
@@ -168,7 +185,7 @@ class StatisticsViewModel @Inject constructor(
                                 if (index == 0) {
                                     outputStream.write(ExportHeader.DAY.toByteArray())
                                 }
-                                outputStream.write("${model.startTime.formatDateTime()},${model.endTime.formatDateTime()},${model.totalTime.formatTime()}\n".toByteArray())
+                                outputStream.write("${model.startTime.formatDateTime()},${model.endTime.formatDateTime()},${model.totalTime.formatTime()},${model.note ?: ""}\n".toByteArray())
                             }
                         }
                     }
@@ -305,7 +322,8 @@ class StatisticsViewModel @Inject constructor(
                         endTime = 0L,
                         totalTime = monthSum[it.value.startTime.formatDateTime("yyyy-MM")] ?: 0L,
                         headerTitle = key,
-                        headerTotalTime = yearSum[key] ?: 0L
+                        headerTotalTime = yearSum[key] ?: 0L,
+                        note = null
                     )
                 }
             }
@@ -324,7 +342,8 @@ class StatisticsViewModel @Inject constructor(
                         endTime = 0L,
                         totalTime = daySum[it.value.startTime.formatDateTime("yyyy-MM-dd")] ?: 0L,
                         headerTitle = key,
-                        headerTotalTime = monthSum[key] ?: 0L
+                        headerTotalTime = monthSum[key] ?: 0L,
+                        note = null
                     )
                 }
             }
@@ -337,7 +356,8 @@ class StatisticsViewModel @Inject constructor(
                         endTime = it.endTime,
                         totalTime = it.totalTime,
                         headerTitle = key,
-                        headerTotalTime = daySum[key] ?: 0L
+                        headerTotalTime = daySum[key] ?: 0L,
+                        note = it.noteText
                     )
                 }
             }

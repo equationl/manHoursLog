@@ -75,6 +75,7 @@ import com.equationl.manhourslog.ui.view.list.viewmodel.StatisticsViewModel
 import com.equationl.manhourslog.ui.widget.DateTimeRangePickerDialog
 import com.equationl.manhourslog.ui.widget.ListEmptyContent
 import com.equationl.manhourslog.ui.widget.LoadingContent
+import com.equationl.manhourslog.ui.widget.ShowNoteDialog
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
@@ -163,7 +164,8 @@ fun StatisticsScreen(
                 HomeContent(
                     state,
                     onChangeScale = viewModel::changeShowScale,
-                    onClickDeleteItem = viewModel::onClickDeleteItem
+                    onClickDeleteItem = viewModel::onClickDeleteItem,
+                    onChangeNote = viewModel::onChangeNote
                 )
             }
         }
@@ -286,14 +288,16 @@ private fun TopBarMoreFunction(
 private fun HomeContent(
     state: StatisticsState,
     onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
-    onClickDeleteItem: (id: Int) -> Unit
+    onClickDeleteItem: (id: Int) -> Unit,
+    onChangeNote: (value: String, id: Int) -> Unit
 ) {
     when (state.showType) {
         StatisticsShowType.List ->
             ListContent(
                 state,
                 onChangeScale = onChangeScale,
-                onClickDeleteItem = onClickDeleteItem
+                onClickDeleteItem = onClickDeleteItem,
+                onChangeNote = onChangeNote
             )
         StatisticsShowType.Chart -> ChartContent(
             state,
@@ -307,8 +311,12 @@ private fun HomeContent(
 private fun ListContent(
     state: StatisticsState,
     onChangeScale: (newScale: StatisticsShowScale, newRange: StatisticsShowRange?) -> Unit,
-    onClickDeleteItem: (id: Int) -> Unit
+    onClickDeleteItem: (id: Int) -> Unit,
+    onChangeNote: (value: String, id: Int) -> Unit
 ) {
+    val dialogState = rememberMaterialDialogState()
+    var currentNoteValue by remember { mutableStateOf("") }
+    var clickItemId = remember { -1 }
 
     val dataList = state.dataList
 
@@ -344,6 +352,12 @@ private fun ListContent(
                                 currentScale = state.showScale,
                                 onClickDeleteItem = {
                                     onClickDeleteItem(item.id)
+                                },
+                                onClickCard = {
+                                    // TODO show note
+                                    currentNoteValue = item.note ?: ""
+                                    clickItemId = item.id
+                                    dialogState.show()
                                 }
                             )
                         }
@@ -361,6 +375,10 @@ private fun ListContent(
                 }
             }
         }
+    }
+
+    ShowNoteDialog(showState = dialogState, initValue = currentNoteValue) {
+        onChangeNote(it, clickItemId)
     }
 }
 
@@ -430,7 +448,8 @@ private fun HeaderFilter(
 private fun SwipeAbleListItem(
     item: StaticsScreenModel,
     currentScale: StatisticsShowScale,
-    onClickDeleteItem: () -> Unit
+    onClickDeleteItem: () -> Unit,
+    onClickCard: (() -> Unit),
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
@@ -462,7 +481,7 @@ private fun SwipeAbleListItem(
             }
         },
         content = {
-            ListItem(item, currentScale, null)
+            ListItem(item, currentScale, onClickCard)
         },
         enableDismissFromStartToEnd = false,
         enableDismissFromEndToStart = true,

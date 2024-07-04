@@ -16,4 +16,6 @@ data class DBManHoursTable (
     var totalTime: Long,
     @ColumnInfo(name = "delete_flag", defaultValue = "0")
     var isDelete: Boolean = false,
+    @ColumnInfo(name = "note_text")
+    var noteText: String? = null
 )

@@ -6,5 +6,6 @@ data class StaticsScreenModel(
     val endTime: Long,
     val totalTime: Long,
     val headerTitle: String,
-    val headerTotalTime: Long
+    val headerTotalTime: Long,
+    var note: String?
 )
