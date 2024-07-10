@@ -21,7 +21,7 @@ import java.io.IOException
 object DataStoreUtils {
 
     private const val preferenceName = "ManHoursPreference"
-    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(preferenceName)
+    val Context.dataStore: DataStore<Preferences> by preferencesDataStore(preferenceName)
 
     private lateinit var dataStore: DataStore<Preferences>
 

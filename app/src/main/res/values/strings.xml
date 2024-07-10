@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">manHoursLog</string>
+
+    <string name="quickStart_widget_description">Quickly record man hours</string>
 </resources>

@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.equationl.manhourslog.constants.Route
 import com.equationl.manhourslog.ui.view.LocalNavController
@@ -59,6 +60,13 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        // 数据由可能从小部件中被修改，所以这里需要在 onResume 时重新加载数据
+        viewModel.loadData()
+
+        onPauseOrDispose { }
+    }
 
     LaunchedEffect(Unit) {
         Utils.changeScreenOrientation(context, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
