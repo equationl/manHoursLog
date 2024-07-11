@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
-import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.action.actionRunCallback
@@ -24,10 +23,8 @@ import androidx.glance.text.TextDefaults
 import com.equationl.manhourslog.ui.view.home.state.LogState
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.toJson
+import com.equationl.manhourslog.widget.common.constant.WidgetConstants
 import com.equationl.manhourslog.widget.quickStart.callback.QuickStartWidgetCallback
-
-val actionKey = ActionParameters.Key<String>(QuickStartWidgetCallback.ACTION_NAME)
-val logStateKey = ActionParameters.Key<String>(QuickStartWidgetCallback.LOG_STATE)
 
 @Composable
 fun QuickStartContent(logState: LogState) {
@@ -53,8 +50,8 @@ fun QuickStartContent(logState: LogState) {
                     .background(GlanceTheme.colors.primary)
                     .clickable(onClick = actionRunCallback<QuickStartWidgetCallback>(
                         actionParametersOf(
-                            actionKey to QuickStartWidgetCallback.TOGGLE_STATE,
-                            logStateKey to logState.toJson()
+                            WidgetConstants.actionKey to WidgetConstants.TOGGLE_STATE,
+                            WidgetConstants.logStateKey to logState.toJson()
                         )
                     ))
             ) {

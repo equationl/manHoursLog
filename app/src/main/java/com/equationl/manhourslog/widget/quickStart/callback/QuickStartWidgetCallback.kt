@@ -13,6 +13,11 @@ import com.equationl.manhourslog.util.datastore.DataKey
 import com.equationl.manhourslog.util.datastore.DataStoreUtils
 import com.equationl.manhourslog.util.fromJson
 import com.equationl.manhourslog.util.toJson
+import com.equationl.manhourslog.widget.common.constant.WidgetConstants.ACTION_NAME
+import com.equationl.manhourslog.widget.common.constant.WidgetConstants.APP_WIDGET_ID
+import com.equationl.manhourslog.widget.common.constant.WidgetConstants.LOG_STATE
+import com.equationl.manhourslog.widget.common.constant.WidgetConstants.TOGGLE_STATE
+import com.equationl.manhourslog.widget.common.constant.WidgetConstants.UPDATE_ACTION
 import com.equationl.manhourslog.widget.quickStart.receiver.QuickStartWidgetReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,13 +27,6 @@ class QuickStartWidgetCallback : ActionCallback {
     companion object {
         @Suppress("unused")
         private const val TAG = "el, QuickStartWidgetCallback"
-
-        const val ACTION_NAME = "actionName"
-        const val TOGGLE_STATE = "toggleState"
-        const val LOG_STATE = "logState"
-        const val APP_WIDGET_ID = "appWidgetId"
-
-        const val UPDATE_ACTION = "updateAction"
     }
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
