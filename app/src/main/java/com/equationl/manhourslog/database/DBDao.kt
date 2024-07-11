@@ -2,11 +2,12 @@ package com.equationl.manhourslog.database
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 
 @Dao
 interface ManHoursDao{
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertData(data: DBManHoursTable): Long
 
     @Query("UPDATE man_hours_table SET delete_flag = 1 WHERE id = :id")
@@ -14,6 +15,9 @@ interface ManHoursDao{
 
     @Query("UPDATE man_hours_table SET note_text = :newValue WHERE id = :id")
     suspend fun updateNoteById(id: Int, newValue: String): Int
+
+    @Query("UPDATE man_hours_table SET note_text = :newValue WHERE start_Time = :startTime")
+    suspend fun updateNoteByStartTime(startTime: Long, newValue: String): Int
 
     @Query("SELECT SUM(total_Time) FROM man_hours_table WHERE (start_Time BETWEEN :startTime AND :endTime) AND delete_flag=0")
     suspend fun queryRangeTotalTime(startTime: Long, endTime: Long): Long

@@ -110,6 +110,8 @@ class StatisticsViewModel @Inject constructor(
         val data = result.data
         val uri = data?.data
 
+        var hasConflict = false
+
         uri?.let {
             viewModelScope.launch(Dispatchers.IO) {
                 var isHeader = true
@@ -131,16 +133,26 @@ class StatisticsViewModel @Inject constructor(
                             try {
                                 val lineSplit = line.split(",")
                                 val insertData = DBManHoursTable(
-                                    startTime = lineSplit[0].toTimestamp(),
+                                    startTime = lineSplit.getOrNull(4)?.toLongOrNull() ?: lineSplit[0].toTimestamp(), // 如果存在时间戳则使用时间戳，否则重新格式化 start_time 。 但是只有存在时间戳才能完成重复判定
                                     endTime = lineSplit[1].toTimestamp(),
                                     totalTime = lineSplit[2].timeToTimeStamp(),
                                     noteText = lineSplit.getOrNull(3) // 兼容旧版本，最后一列可能为空
                                 )
 
-                                // FIXME 没有处理重复数据
                                 val insertResult = db.manHoursDB().insertData(insertData)
-                                if (insertResult <= 0) {
-                                    Log.w("el", "onImport: insetData = $insertData, result = $insertResult")
+                                if (insertResult <= 0) { // 插入失败可能是由于重复数据导致（start_time 设置为了唯一键）
+                                    if (!lineSplit.getOrNull(3).isNullOrBlank() && lineSplit.getOrNull(4)?.toLongOrNull() != null) {
+                                        // 如果插入失败，但是备注不为空，则认为是更新备注
+                                        val updateResult = db.manHoursDB().updateNoteByStartTime(lineSplit[4].toLong(), lineSplit[3])
+                                        if (updateResult <= 0) {
+                                            hasConflict = true
+                                            Log.w("el", "onImport: updateNote fail: startTime = ${lineSplit[4].toLong()}, note = ${lineSplit[3]}")
+                                        }
+                                    }
+                                    else {
+                                        hasConflict = true
+                                        Log.w("el", "onImport: insetData = $insertData, result = $insertResult")
+                                    }
                                 }
                             } catch (tr: Throwable) {
                                 withContext(Dispatchers.Main) {
@@ -153,7 +165,12 @@ class StatisticsViewModel @Inject constructor(
                 }
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Import Finish", Toast.LENGTH_SHORT).show()
+                    if (hasConflict) {
+                        Toast.makeText(context, "Import Finish, But some row not insert, Maybe it's because of duplicate data", Toast.LENGTH_LONG).show()
+                    }
+                    else {
+                        Toast.makeText(context, "Import Finish", Toast.LENGTH_SHORT).show()
+                    }
                 }
 
                 loadData()
@@ -185,7 +202,7 @@ class StatisticsViewModel @Inject constructor(
                                 if (index == 0) {
                                     outputStream.write(ExportHeader.DAY.toByteArray())
                                 }
-                                outputStream.write("${model.startTime.formatDateTime()},${model.endTime.formatDateTime()},${model.totalTime.formatTime()},${model.note ?: ""}\n".toByteArray())
+                                outputStream.write("${model.startTime.formatDateTime()},${model.endTime.formatDateTime()},${model.totalTime.formatTime()},${model.note ?: ""},${model.startTime}\n".toByteArray())
                             }
                         }
                     }

@@ -2,9 +2,10 @@ package com.equationl.manhourslog.database
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "man_hours_table")
+@Entity(tableName = "man_hours_table", indices = [Index(value = ["start_Time"], unique = true)])
 data class DBManHoursTable (
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0,

@@ -377,6 +377,7 @@ private fun ListContent(
                                 item,
                                 currentScale = state.showScale,
                                 onClickDeleteItem = {
+                                    // TODO 删除应该支持撤销 （snackBar）
                                     onClickDeleteItem(item.id)
                                 },
                                 onClickCard = {
