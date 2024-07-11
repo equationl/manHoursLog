@@ -9,6 +9,7 @@
 | ![1](./docs/screenshot_1.png) | ![2](./docs/screenshot_2.png) |
 |-------------------------------|-------------------------------|
 | ![3](./docs/screenshot_3.png) | ![4](./docs/screenshot_4.png) |
+| ![5](./docs/screenshot_5.png) |                               |
 
 ## 功能特性
 1. 一键记录，无需后台运行

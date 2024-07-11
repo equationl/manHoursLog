@@ -16,8 +16,9 @@ class StaticsWidget: GlanceAppWidget() {
         provideContent {
             val prefs = currentState<Preferences>()
             val staticDataModelJson = prefs[WidgetConstants.prefKeyStaticsData]
+            val lastUpdateTime = prefs[WidgetConstants.prefKeyLastUpdateTime]
 
-            StaticsContent(staticDataModelJson ?: "")
+            StaticsContent(staticDataModelJson ?: "", lastUpdateTime)
         }
     }
 }

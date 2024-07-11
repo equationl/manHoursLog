@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.ImageProvider
@@ -16,9 +18,13 @@ import androidx.glance.appwidget.components.TitleBar
 import androidx.glance.layout.Column
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.height
+import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.text.Text
+import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
 import com.equationl.manhourslog.R
+import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import com.equationl.manhourslog.util.fromJson
 import com.equationl.manhourslog.widget.common.constant.WidgetConstants
@@ -26,7 +32,7 @@ import com.equationl.manhourslog.widget.common.model.StaticDataModel
 import com.equationl.manhourslog.widget.statics.callback.StaticWidgetCallback
 
 @Composable
-fun StaticsContent(staticDataModelJson: String) {
+fun StaticsContent(staticDataModelJson: String, lastUpdateTime: Long?) {
 
     val staticDataModel by remember(staticDataModelJson) {
         mutableStateOf(staticDataModelJson.fromJson<StaticDataModel>())
@@ -44,6 +50,15 @@ fun StaticsContent(staticDataModelJson: String) {
                 Text(text = "This month: ${staticDataModel?.monthTotalTime?.formatTime() ?: ""}")
                 Spacer(modifier = GlanceModifier.height(8.dp))
                 Text(text = "This year: ${staticDataModel?.yearTotalTime?.formatTime() ?: ""}")
+                Spacer(modifier = GlanceModifier.height(8.dp))
+                Text(
+                    text = "Last update: ${lastUpdateTime?.formatDateTime() ?: "Never update"}",
+                    style = TextStyle(
+                        fontSize = 12.sp, color = ColorProvider(
+                            Color.Black.copy(alpha = 0.5f)
+                        )
+                    )
+                )
             }
         }
     }
@@ -52,13 +67,14 @@ fun StaticsContent(staticDataModelJson: String) {
 @Composable
 private fun TitleContent() {
     TitleBar(
-        startIcon = ImageProvider(R.drawable.ic_launcher_foreground),
+        startIcon = ImageProvider(R.drawable.ic_analysis),
         title = "Statics",
         actions = {
             CircleIconButton(
-                imageProvider = ImageProvider(android.R.drawable.ic_popup_sync),
+                imageProvider = ImageProvider(R.drawable.ic_refresh),
                 contentDescription = "Refresh",
-                modifier = GlanceModifier.size(24.dp),
+                backgroundColor = null,
+                modifier = GlanceModifier.size(24.dp).padding(horizontal = 4.dp),
                 onClick = actionRunCallback<StaticWidgetCallback>(
                     actionParametersOf(
                         WidgetConstants.actionKey to WidgetConstants.UPDATE_DATA,

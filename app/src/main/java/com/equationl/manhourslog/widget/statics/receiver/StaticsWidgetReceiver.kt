@@ -69,6 +69,7 @@ class StaticsWidgetReceiver: GlanceAppWidgetReceiver() {
         updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { pref ->
             pref.toMutablePreferences().apply {
                 this[WidgetConstants.prefKeyStaticsData] = staticDataModel.toJson()
+                this[WidgetConstants.prefKeyLastUpdateTime] = System.currentTimeMillis()
             }
         }
         glanceAppWidget.update(context, glanceId)
