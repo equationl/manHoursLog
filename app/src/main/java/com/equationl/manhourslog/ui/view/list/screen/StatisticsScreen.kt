@@ -42,6 +42,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -49,6 +51,7 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.rememberTopAppBarState
@@ -127,6 +130,8 @@ fun StatisticsScreen(
         }
     }
 
+    val scaffoldState = rememberBottomSheetScaffoldState()
+
 
     Scaffold(
         modifier = Modifier
@@ -168,6 +173,11 @@ fun StatisticsScreen(
                     Icon(imageVector = Icons.Outlined.ArrowUpward, contentDescription = "Back to top")
                 }
             }
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = scaffoldState.snackbarHostState) { snackBarData ->
+                Snackbar(snackbarData = snackBarData)
+            }
         }
     ) { innerPadding ->
         Column(
@@ -182,7 +192,9 @@ fun StatisticsScreen(
                 HomeContent(
                     state,
                     onChangeScale = viewModel::changeShowScale,
-                    onClickDeleteItem = viewModel::onClickDeleteItem,
+                    onClickDeleteItem = {
+                        viewModel.onClickDeleteItem(scaffoldState.snackbarHostState, it)
+                    },
                     onChangeNote = viewModel::onChangeNote
                 )
             }
@@ -377,7 +389,6 @@ private fun ListContent(
                                 item,
                                 currentScale = state.showScale,
                                 onClickDeleteItem = {
-                                    // TODO 删除应该支持撤销 （snackBar）
                                     onClickDeleteItem(item.id)
                                 },
                                 onClickCard = {

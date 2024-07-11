@@ -6,6 +6,8 @@ import android.content.pm.ActivityInfo
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.equationl.manhourslog.constants.ExportHeader
@@ -66,15 +68,38 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
-    fun onClickDeleteItem(id: Int) {
+    fun onClickDeleteItem(snackBarHostState: SnackbarHostState, id: Int) {
         viewModelScope.launch {
-            db.manHoursDB().markDeleteRowById(id)
-            // loadData()
-            _uiState.update { state ->
-                val newList = arrayListOf<StaticsScreenModel>()
-                newList.addAll(state.dataList)
-                newList.removeIf { it.id == id }
-                state.copy(dataList = newList)
+            val result = db.manHoursDB().markDeleteRowById(id)
+            if (result == 1) {
+                val removeIndex = _uiState.value.dataList.indexOfFirst { it.id == id }
+                val removeItem = _uiState.value.dataList[removeIndex]
+
+                _uiState.update { state ->
+                    val newList = arrayListOf<StaticsScreenModel>()
+                    newList.addAll(state.dataList)
+                    newList.removeAt(removeIndex)
+                    state.copy(dataList = newList)
+                }
+
+                val snackBarResult = snackBarHostState.showSnackbar(message = "Row already delete", actionLabel = "UNDO", withDismissAction = true)
+                if (snackBarResult == SnackbarResult.ActionPerformed) {
+                    val recoverResult = db.manHoursDB().markDeleteRowById(id, delete = 0)
+                    if (recoverResult == 1) {
+                        _uiState.update { state ->
+                            val newList = arrayListOf<StaticsScreenModel>()
+                            newList.addAll(state.dataList)
+                            newList.add(removeIndex, removeItem)
+                            state.copy(dataList = newList)
+                        }
+                    }
+                    else {
+                        snackBarHostState.showSnackbar(message = "UNDO fail!")
+                    }
+                }
+            }
+            else {
+                snackBarHostState.showSnackbar(message = "Delete fail!")
             }
         }
     }

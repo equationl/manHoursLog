@@ -10,8 +10,8 @@ interface ManHoursDao{
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertData(data: DBManHoursTable): Long
 
-    @Query("UPDATE man_hours_table SET delete_flag = 1 WHERE id = :id")
-    suspend fun markDeleteRowById(id: Int): Int
+    @Query("UPDATE man_hours_table SET delete_flag = :delete WHERE id = :id")
+    suspend fun markDeleteRowById(id: Int, delete: Int = 1): Int
 
     @Query("UPDATE man_hours_table SET note_text = :newValue WHERE id = :id")
     suspend fun updateNoteById(id: Int, newValue: String): Int
