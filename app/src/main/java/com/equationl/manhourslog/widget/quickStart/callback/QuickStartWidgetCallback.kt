@@ -1,4 +1,4 @@
-package com.equationl.manhourslog.widget.callback
+package com.equationl.manhourslog.widget.quickStart.callback
 
 import android.content.Context
 import android.content.Intent
@@ -13,7 +13,7 @@ import com.equationl.manhourslog.util.datastore.DataKey
 import com.equationl.manhourslog.util.datastore.DataStoreUtils
 import com.equationl.manhourslog.util.fromJson
 import com.equationl.manhourslog.util.toJson
-import com.equationl.manhourslog.widget.receiver.QuickStartWidgetReceiver
+import com.equationl.manhourslog.widget.quickStart.receiver.QuickStartWidgetReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

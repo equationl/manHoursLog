@@ -1,4 +1,4 @@
-package com.equationl.manhourslog.widget.ui.quickStart
+package com.equationl.manhourslog.widget.quickStart.ui
 
 import android.os.Build
 import androidx.compose.runtime.Composable
@@ -24,7 +24,7 @@ import androidx.glance.text.TextDefaults
 import com.equationl.manhourslog.ui.view.home.state.LogState
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.toJson
-import com.equationl.manhourslog.widget.callback.QuickStartWidgetCallback
+import com.equationl.manhourslog.widget.quickStart.callback.QuickStartWidgetCallback
 
 val actionKey = ActionParameters.Key<String>(QuickStartWidgetCallback.ACTION_NAME)
 val logStateKey = ActionParameters.Key<String>(QuickStartWidgetCallback.LOG_STATE)

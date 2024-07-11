@@ -25,7 +25,7 @@
         </activity>
 
         <receiver
-            android:name=".widget.receiver.QuickStartWidgetReceiver"
+            android:name=".widget.quickStart.receiver.QuickStartWidgetReceiver"
             android:enabled="@bool/glance_appwidget_available"
             android:exported="false">
             <intent-filter>

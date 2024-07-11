@@ -1,4 +1,4 @@
-package com.equationl.manhourslog.widget.ui.quickStart
+package com.equationl.manhourslog.widget.quickStart.ui
 
 import android.content.Context
 import androidx.compose.runtime.collectAsState

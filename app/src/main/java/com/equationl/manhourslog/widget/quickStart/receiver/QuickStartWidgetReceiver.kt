@@ -1,12 +1,12 @@
-package com.equationl.manhourslog.widget.receiver
+package com.equationl.manhourslog.widget.quickStart.receiver
 
 import android.content.Context
 import android.content.Intent
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
-import com.equationl.manhourslog.widget.callback.QuickStartWidgetCallback
-import com.equationl.manhourslog.widget.ui.quickStart.QuickStartWidget
+import com.equationl.manhourslog.widget.quickStart.callback.QuickStartWidgetCallback
+import com.equationl.manhourslog.widget.quickStart.ui.QuickStartWidget
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
