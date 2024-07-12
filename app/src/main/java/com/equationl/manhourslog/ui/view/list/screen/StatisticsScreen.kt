@@ -217,7 +217,7 @@ private fun TopBar(
     onImport: () -> Unit,
 ) {
     val navController = LocalNavController.current
-    val dialogState = rememberMaterialDialogState()
+    var isShowDatePickedDialog by remember { mutableStateOf(false) }
     var isExpandMenu by remember { mutableStateOf(false) }
 
     MediumTopAppBar(
@@ -253,7 +253,7 @@ private fun TopBar(
             ) {
                 IconButton(
                     onClick = {
-                        dialogState.show()
+                        isShowDatePickedDialog = true
                     }
                 ) {
                     Icon(Icons.Outlined.DateRange, contentDescription = "date filter")
@@ -291,7 +291,15 @@ private fun TopBar(
         }
     )
 
-    DateTimeRangePickerDialog(showState = dialogState, initValue = iniDateRangeValue, onFilterDate = onFilterDateRange)
+    if (isShowDatePickedDialog) {
+        DateTimeRangePickerDialog(
+            initValue = iniDateRangeValue,
+            onFilterDate = onFilterDateRange,
+            onDismissRequest = {
+                isShowDatePickedDialog = false
+            }
+        )
+    }
 }
 
 @Composable
@@ -456,7 +464,6 @@ private fun ChartContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HeaderFilter(
     state: StatisticsState,
@@ -482,7 +489,6 @@ private fun HeaderFilter(
     Spacer(modifier = Modifier.height(16.dp))
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeAbleListItem(
     item: StaticsScreenModel,
@@ -584,7 +590,10 @@ private fun ListCardContent(
             Icon(
                 Icons.AutoMirrored.Filled.Input,
                 contentDescription = "input",
-                modifier = Modifier.padding(8.dp).size(8.dp).align(Alignment.TopEnd)
+                modifier = Modifier
+                    .padding(8.dp)
+                    .size(8.dp)
+                    .align(Alignment.TopEnd)
             )
         }
     }

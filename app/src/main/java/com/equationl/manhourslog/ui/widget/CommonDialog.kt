@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.NoteAdd
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,9 +33,9 @@ import com.vanpra.composematerialdialogs.MaterialDialogState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateTimeRangePickerDialog(
-    showState: MaterialDialogState,
     initValue: StatisticsShowRange,
-    onFilterDate: (range: StatisticsShowRange) -> Unit
+    onFilterDate: (range: StatisticsShowRange) -> Unit,
+    onDismissRequest: () -> Unit
 ) {
     val state = rememberDateRangePickerState(
         initialSelectedStartDateMillis = initValue.start,
@@ -42,21 +44,34 @@ fun DateTimeRangePickerDialog(
 
     state.setSelection(initValue.start, initValue.end)
 
+    DatePickerDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDismissRequest()
+                }
+            ) {
+                Text(text = "Cancel")
+            }
 
-    // fixme UI 显示不全
-    MaterialDialog(
-        dialogState = showState,
-        buttons = {
-            positiveButton("Confirm") {
-                onFilterDate(StatisticsShowRange(state.selectedStartDateMillis ?: 0L, state.selectedEndDateMillis ?: 0L))
+            TextButton(
+                onClick = {
+                    state.setSelection(0L, System.currentTimeMillis())
+                }
+            ) {
+                Text(text = "All")
             }
-            negativeButton("Cancel")
-            button("All") {
-                // state.setSelection(DateTimeUtil.getWeeOfCurrentMonth(), DateTimeUtil.getCurrentMonthEnd())
-                state.setSelection(0L, System.currentTimeMillis())
+
+            TextButton(
+                onClick = {
+                    onDismissRequest()
+                    onFilterDate(StatisticsShowRange(state.selectedStartDateMillis ?: 0L, state.selectedEndDateMillis ?: ((state.selectedStartDateMillis ?: 0L) + 1)))
+                }
+            ) {
+                Text(text = "Confirm")
             }
-        },
-        backgroundColor = MaterialTheme.colorScheme.background
+        }
     ) {
         DateRangePicker(
             state = state,
