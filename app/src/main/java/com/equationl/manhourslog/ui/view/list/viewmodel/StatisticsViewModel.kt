@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.lifecycle.ViewModel
@@ -82,7 +83,13 @@ class StatisticsViewModel @Inject constructor(
                     state.copy(dataList = newList)
                 }
 
-                val snackBarResult = snackBarHostState.showSnackbar(message = "Row already delete", actionLabel = "UNDO", withDismissAction = true)
+                val snackBarResult = snackBarHostState.showSnackbar(
+                    message = "Row already delete",
+                    actionLabel = "UNDO",
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Long
+                )
+
                 if (snackBarResult == SnackbarResult.ActionPerformed) {
                     val recoverResult = db.manHoursDB().markDeleteRowById(id, delete = 0)
                     if (recoverResult == 1) {
@@ -157,21 +164,36 @@ class StatisticsViewModel @Inject constructor(
                         else {
                             try {
                                 val lineSplit = line.split(",")
+                                // 如果存在时间戳则使用时间戳，否则重新格式化 start_time 。 但是只有存在时间戳才能完成重复判定
+                                val startTime = lineSplit.getOrNull(4)?.toLongOrNull() ?: lineSplit[0].toTimestamp()
                                 val insertData = DBManHoursTable(
-                                    startTime = lineSplit.getOrNull(4)?.toLongOrNull() ?: lineSplit[0].toTimestamp(), // 如果存在时间戳则使用时间戳，否则重新格式化 start_time 。 但是只有存在时间戳才能完成重复判定
+                                    startTime = startTime,
                                     endTime = lineSplit[1].toTimestamp(),
                                     totalTime = lineSplit[2].timeToTimeStamp(),
-                                    noteText = lineSplit.getOrNull(3) // 兼容旧版本，最后一列可能为空
+                                    noteText = lineSplit.getOrNull(3), // 兼容旧版本，最后一列可能为空
+                                    dataSourceType = 1
                                 )
 
                                 val insertResult = db.manHoursDB().insertData(insertData)
                                 if (insertResult <= 0) { // 插入失败可能是由于重复数据导致（start_time 设置为了唯一键）
-                                    if (!lineSplit.getOrNull(3).isNullOrBlank() && lineSplit.getOrNull(4)?.toLongOrNull() != null) {
-                                        // 如果插入失败，但是备注不为空，则认为是更新备注
-                                        val updateResult = db.manHoursDB().updateNoteByStartTime(lineSplit[4].toLong(), lineSplit[3])
-                                        if (updateResult <= 0) {
-                                            hasConflict = true
-                                            Log.w("el", "onImport: updateNote fail: startTime = ${lineSplit[4].toLong()}, note = ${lineSplit[3]}")
+                                    val startTimeStamp = lineSplit.getOrNull(4)?.toLongOrNull()
+                                    if (startTimeStamp != null) {
+                                        // 由于删除数据使用的是软删除，所以还需要判断是否是被软删除了，如果是的话需要恢复数据（这里无法兼容旧数据，如果是旧数据没有时间戳的话无法恢复数据）
+                                        val tempRow = db.manHoursDB().queryRowByStartTime(startTimeStamp)
+                                        if (tempRow?.isDelete == true) {
+                                            val updateResult = db.manHoursDB().markDeleteAndTypeRowByStartTime(startTimeStamp, delete = 0, dataType = 1)
+                                            if (updateResult <= 0) {
+                                                Log.w("el", "onImport: updateDeleteFlag fail: startTime = $startTimeStamp")
+                                            }
+                                        }
+
+                                        val noteText = lineSplit.getOrNull(3)
+                                        if (!noteText.isNullOrBlank()) { // 如果备注不为空，则认为是更新备注
+                                            val updateResult = db.manHoursDB().updateNoteByStartTime(startTimeStamp, noteText)
+                                            if (updateResult <= 0) {
+                                                hasConflict = true
+                                                Log.w("el", "onImport: updateNote fail: startTime = ${startTimeStamp}, note = $noteText")
+                                            }
                                         }
                                     }
                                     else {
@@ -365,7 +387,8 @@ class StatisticsViewModel @Inject constructor(
                         totalTime = monthSum[it.value.startTime.formatDateTime("yyyy-MM")] ?: 0L,
                         headerTitle = key,
                         headerTotalTime = yearSum[key] ?: 0L,
-                        note = null
+                        note = null,
+                        dataSourceType = null
                     )
                 }
             }
@@ -385,7 +408,8 @@ class StatisticsViewModel @Inject constructor(
                         totalTime = daySum[it.value.startTime.formatDateTime("yyyy-MM-dd")] ?: 0L,
                         headerTitle = key,
                         headerTotalTime = monthSum[key] ?: 0L,
-                        note = null
+                        note = null,
+                        dataSourceType = null
                     )
                 }
             }
@@ -399,7 +423,8 @@ class StatisticsViewModel @Inject constructor(
                         totalTime = it.totalTime,
                         headerTitle = key,
                         headerTotalTime = daySum[key] ?: 0L,
-                        note = it.noteText
+                        note = it.noteText,
+                        dataSourceType = it.dataSourceType
                     )
                 }
             }

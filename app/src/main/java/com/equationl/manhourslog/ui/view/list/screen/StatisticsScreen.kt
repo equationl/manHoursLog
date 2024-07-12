@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Input
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Delete
@@ -553,28 +555,38 @@ private fun ListCardContent(
     item: StaticsScreenModel,
     currentScale: StatisticsShowScale,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .padding(8.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxHeight(),
-            verticalArrangement = Arrangement.SpaceEvenly
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .padding(8.dp)
         ) {
-            if (currentScale == StatisticsShowScale.Day) {
-                Text(text = "Start at: ${item.startTime.formatDateTime()}", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Finish at: ${item.endTime.formatDateTime()}", style = MaterialTheme.typography.bodyMedium)
+            Column(
+                modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
+                if (currentScale == StatisticsShowScale.Day) {
+                    Text(text = "Start at: ${item.startTime.formatDateTime()}", style = MaterialTheme.typography.bodyMedium)
+                    Text(text = "Finish at: ${item.endTime.formatDateTime()}", style = MaterialTheme.typography.bodyMedium)
+                }
+                else {
+                    Text(text = "Date: ${item.startTime.formatDateTime(format = if (currentScale == StatisticsShowScale.Month) "yyyy-MM-dd" else "yyyy-MM")}")
+                }
             }
-            else {
-                Text(text = "Date: ${item.startTime.formatDateTime(format = if (currentScale == StatisticsShowScale.Month) "yyyy-MM-dd" else "yyyy-MM")}")
-            }
+
+            Text(text = item.totalTime.formatTime(), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
         }
 
-        Text(text = item.totalTime.formatTime(), style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold))
+        if (currentScale == StatisticsShowScale.Day && item.dataSourceType == 1) {
+            Icon(
+                Icons.AutoMirrored.Filled.Input,
+                contentDescription = "input",
+                modifier = Modifier.padding(8.dp).size(8.dp).align(Alignment.TopEnd)
+            )
+        }
     }
 }
 

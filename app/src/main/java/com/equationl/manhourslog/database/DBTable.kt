@@ -18,5 +18,14 @@ data class DBManHoursTable (
     @ColumnInfo(name = "delete_flag", defaultValue = "0")
     var isDelete: Boolean = false,
     @ColumnInfo(name = "note_text")
-    var noteText: String? = null
+    var noteText: String? = null,
+    /**
+     * 数据来源：
+     *
+     * 0：原始记录；1：导入数据；
+     * */
+    @ColumnInfo(name = "data_source_type", defaultValue = "0")
+    var dataSourceType: Int = 0,
+    @ColumnInfo(name = "edit_time", defaultValue = "0")
+    var editTime: Long = System.currentTimeMillis()
 )
