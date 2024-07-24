@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Input
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -490,7 +491,7 @@ private fun HeaderFilter(
 }
 
 @Composable
-private fun SwipeAbleListItem(
+private fun LazyItemScope.SwipeAbleListItem(
     item: StaticsScreenModel,
     currentScale: StatisticsShowScale,
     onClickDeleteItem: () -> Unit,
@@ -530,6 +531,7 @@ private fun SwipeAbleListItem(
         },
         enableDismissFromStartToEnd = false,
         enableDismissFromEndToStart = true,
+        modifier = Modifier.animateItem()
     )
 }
 
