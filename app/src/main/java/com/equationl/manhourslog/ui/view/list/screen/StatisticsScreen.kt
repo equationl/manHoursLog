@@ -31,6 +31,7 @@ import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.ImportContacts
 import androidx.compose.material.icons.outlined.InsertChartOutlined
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -73,6 +74,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.equationl.manhourslog.constants.Route
 import com.equationl.manhourslog.model.StaticsScreenModel
 import com.equationl.manhourslog.ui.view.LocalNavController
 import com.equationl.manhourslog.ui.view.list.state.StatisticsShowRange
@@ -105,6 +107,7 @@ fun StatisticsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    val navController = LocalNavController.current
 
     val context = LocalContext.current
     val exportLauncher = rememberLauncherForActivityResult(
@@ -157,6 +160,9 @@ fun StatisticsScreen(
                 onImport = {
                     val intent = viewModel.createReadDocumentIntent()
                     importLauncher.launch(intent)
+                },
+                onSync = {
+                    navController.navigate(Route.SYNC)
                 }
             )
         },
@@ -216,6 +222,7 @@ private fun TopBar(
     onChangeShowType: () -> Unit,
     onExport: () -> Unit,
     onImport: () -> Unit,
+    onSync: () -> Unit
 ) {
     val navController = LocalNavController.current
     var isShowDatePickedDialog by remember { mutableStateOf(false) }
@@ -287,6 +294,10 @@ private fun TopBar(
                 onClickImport = {
                     isExpandMenu = false
                     onImport()
+                },
+                onClickSync = {
+                    isExpandMenu = false
+                    onSync()
                 }
             )
         }
@@ -308,7 +319,8 @@ private fun TopBarMoreFunction(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
     onClickExport: () -> Unit,
-    onClickImport: () -> Unit
+    onClickImport: () -> Unit,
+    onClickSync: () -> Unit,
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismissRequest) {
         DropdownMenuItem(
@@ -327,6 +339,15 @@ private fun TopBarMoreFunction(
             onClick = onClickImport,
             leadingIcon = {
                 Icon(imageVector = Icons.Outlined.ImportContacts, contentDescription = "import")
+            }
+        )
+        DropdownMenuItem(
+            text = {
+                Text(text = "Sync Data BY Local Net")
+            },
+            onClick = onClickSync,
+            leadingIcon = {
+                Icon(imageVector = Icons.Outlined.Sync, contentDescription = "sync")
             }
         )
     }

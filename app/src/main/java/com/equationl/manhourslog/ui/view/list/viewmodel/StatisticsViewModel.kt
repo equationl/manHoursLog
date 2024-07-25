@@ -24,6 +24,7 @@ import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import com.equationl.manhourslog.util.DateTimeUtil.timeToTimeStamp
 import com.equationl.manhourslog.util.DateTimeUtil.toTimestamp
+import com.equationl.manhourslog.util.ResolveDataUtil
 import com.equationl.manhourslog.util.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -237,19 +238,19 @@ class StatisticsViewModel @Inject constructor(
                                 if (index == 0) {
                                     outputStream.write(ExportHeader.YEAR.toByteArray())
                                 }
-                                outputStream.write("${model.startTime.formatDateTime("yyyy-MM")},${model.totalTime.formatTime()}\n".toByteArray())
+                                outputStream.write(ResolveDataUtil.getCsvRow(_uiState.value.showScale, model).toByteArray())
                             }
                             StatisticsShowScale.Month -> {
                                 if (index == 0) {
                                     outputStream.write(ExportHeader.MONTH.toByteArray())
                                 }
-                                outputStream.write("${model.startTime.formatDateTime("yyyy-MM-dd")},${model.totalTime.formatTime()}\n".toByteArray())
+                                outputStream.write(ResolveDataUtil.getCsvRow(_uiState.value.showScale, model).toByteArray())
                             }
                             StatisticsShowScale.Day -> {
                                 if (index == 0) {
                                     outputStream.write(ExportHeader.DAY.toByteArray())
                                 }
-                                outputStream.write("${model.startTime.formatDateTime()},${model.endTime.formatDateTime()},${model.totalTime.formatTime()},${model.note ?: ""},${model.startTime}\n".toByteArray())
+                                outputStream.write(ResolveDataUtil.getCsvRow(_uiState.value.showScale, model).toByteArray())
                             }
                         }
                     }
@@ -339,95 +340,6 @@ class StatisticsViewModel @Inject constructor(
     }
 
     private fun resolveData(rawDataList: List<DBManHoursTable>): List<StaticsScreenModel> {
-        val daySum = mutableMapOf<String, Long>()
-        val monthSum = mutableMapOf<String, Long>()
-        val yearSum = mutableMapOf<String, Long>()
-
-        for (item in rawDataList) {
-            val key = item.startTime.formatDateTime(format = "yyyy-MM-dd")
-            daySum[key] = (daySum[key] ?: 0L) + item.totalTime
-        }
-
-        if (_uiState.value.showScale == StatisticsShowScale.Month || _uiState.value.showScale == StatisticsShowScale.Year) {
-            daySum.forEach { (t, u) ->
-                val split = t.split("-")
-                val key = "${split[0]}-${split[1]}"
-
-                monthSum[key] = (monthSum[key] ?: 0L) + u
-            }
-
-            Log.w("el", "resolveData: monthSum = $monthSum")
-        }
-
-        if (_uiState.value.showScale == StatisticsShowScale.Year) {
-            monthSum.forEach { (t, u) ->
-                val split = t.split("-")
-                val key = split[0]
-
-                yearSum[key] = (yearSum[key] ?: 0L) + u
-            }
-
-            Log.w("el", "resolveData: yearSum = $yearSum")
-        }
-
-        when (_uiState.value.showScale) {
-            StatisticsShowScale.Year -> {
-                val tempMap = mutableMapOf<String, DBManHoursTable>()
-                for (item in rawDataList) {
-                    val tempKey = item.startTime.formatDateTime("yyyy-MM")
-                    tempMap[tempKey] = item
-                }
-
-                return tempMap.map {
-                    val key = it.value.startTime.formatDateTime("yyyy")
-                    StaticsScreenModel(
-                        id = it.value.id,
-                        startTime = it.value.startTime.formatDateTime("yyyy-MM").toTimestamp("yyyy-MM"),
-                        endTime = 0L,
-                        totalTime = monthSum[it.value.startTime.formatDateTime("yyyy-MM")] ?: 0L,
-                        headerTitle = key,
-                        headerTotalTime = yearSum[key] ?: 0L,
-                        note = null,
-                        dataSourceType = null
-                    )
-                }
-            }
-            StatisticsShowScale.Month -> {
-                val tempMap = mutableMapOf<String, DBManHoursTable>()
-                for (item in rawDataList) {
-                    val tempKey = item.startTime.formatDateTime("yyyy-MM-dd")
-                    tempMap[tempKey] = item
-                }
-
-                return tempMap.map {
-                    val key = it.value.startTime.formatDateTime("yyyy-MM")
-                    StaticsScreenModel(
-                        id = it.value.id,
-                        startTime = it.value.startTime.formatDateTime("yyyy-MM-dd").toTimestamp("yyyy-MM-dd"),
-                        endTime = 0L,
-                        totalTime = daySum[it.value.startTime.formatDateTime("yyyy-MM-dd")] ?: 0L,
-                        headerTitle = key,
-                        headerTotalTime = monthSum[key] ?: 0L,
-                        note = null,
-                        dataSourceType = null
-                    )
-                }
-            }
-            StatisticsShowScale.Day -> {
-                return rawDataList.map {
-                    val key = it.startTime.formatDateTime("yyyy-MM-dd")
-                    StaticsScreenModel(
-                        id = it.id,
-                        startTime = it.startTime,
-                        endTime = it.endTime,
-                        totalTime = it.totalTime,
-                        headerTitle = key,
-                        headerTotalTime = daySum[key] ?: 0L,
-                        note = it.noteText,
-                        dataSourceType = it.dataSourceType
-                    )
-                }
-            }
-        }
+        return ResolveDataUtil.rawDataToStaticsModel(rawDataList, _uiState.value.showScale)
     }
 }
