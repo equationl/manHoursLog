@@ -343,7 +343,7 @@ private fun TopBarMoreFunction(
         )
         DropdownMenuItem(
             text = {
-                Text(text = "Sync Data BY Local Net")
+                Text(text = "Sync Data By Local Net")
             },
             onClick = onClickSync,
             leadingIcon = {

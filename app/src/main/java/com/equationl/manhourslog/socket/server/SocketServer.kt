@@ -3,7 +3,6 @@ package com.equationl.manhourslog.socket.server
 import android.util.Log
 import com.equationl.manhourslog.constants.SocketConstant
 import com.equationl.manhourslog.constants.SocketConstant.HEARTBEAT_RESPONSE_MSG
-import com.equationl.manhourslog.constants.SocketConstant.HEARTBEAT_SEND_MSG
 import com.equationl.manhourslog.constants.SocketConstant.SOCKET_PORT
 import java.io.IOException
 import java.io.InputStream
@@ -45,13 +44,14 @@ object SocketServer {
             try {
                 // 同时只接受一个连接
                 serverSocket = ServerSocket(SOCKET_PORT, 1, null)
+                mCallback.otherMsg("Server start success", type = SocketConstant.SERVER_START_SUCCESS)
                 while (result) {
                     socket = serverSocket?.accept()
                     mCallback.otherMsg("${socket?.inetAddress} to connected", type = SocketConstant.CONNECT_SUCCESS)
                     ServerThread(socket!!, mCallback).start()
                 }
             } catch (e: IOException) {
-                e.printStackTrace()
+                Log.e(TAG, "startServer: ", e)
                 mCallback.otherMsg("${socket?.inetAddress} connect fail: $e", type = SocketConstant.CONNECT_FAIL)
                 result = false
             }
@@ -147,19 +147,18 @@ object SocketServer {
                 while (inputStream.read(buffer).also { len = it } != -1) {
                     receiveStr += String(buffer, 0, len, Charsets.UTF_8)
 
-                    Log.d(TAG, "run: rcv data = $receiveStr")
+                    Log.d(TAG, "run: rcv data($len) = $receiveStr")
 
-                    if (len < 1024) {
-                        socket.inetAddress.hostAddress?.let {
-                            if (receiveStr == HEARTBEAT_SEND_MSG) {//收到客户端发送的心跳消息
-                                //准备回复
-                                replyHeartbeat()
-                            } else {
-                                callback.receiveClientMsg(it, buffer.copyOfRange(0, len))
-                            }
+                    socket.inetAddress.hostAddress?.let {
+                        if (receiveStr == HEARTBEAT_RESPONSE_MSG) {//收到客户端发送的心跳消息
+                            //准备回复
+                            replyHeartbeat()
+                        } else {
+                            callback.receiveClientMsg(it, buffer.copyOfRange(0, len))
                         }
-                        receiveStr = ""
                     }
+                    receiveStr = ""
+
                 }
             } catch (e: IOException) {
                 e.printStackTrace()

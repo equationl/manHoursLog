@@ -153,17 +153,17 @@ object SocketClient {
                 }
                 while (inputStream.read(buffer).also { len = it } != -1) {
                     receiveStr += String(buffer, 0, len, Charsets.UTF_8)
-                    if (len < 1024) {
-                        socket.inetAddress.hostAddress?.let {
-                            if (receiveStr == HEARTBEAT_SEND_MSG) {//收到来自服务端的心跳回复消息
-                                Log.i(TAG, "心跳正常！")
-                                //准备回复
-                            } else {
-                                callback.receiveServerMsg(it, buffer.copyOfRange(0, len))
-                            }
+
+                    socket.inetAddress.hostAddress?.let {
+                        if (receiveStr == HEARTBEAT_SEND_MSG) {//收到来自服务端的心跳回复消息
+                            Log.i(TAG, "心跳正常！")
+                            //准备回复
+                        } else {
+                            callback.receiveServerMsg(it, buffer.copyOfRange(0, len))
                         }
-                        receiveStr = ""
                     }
+                    receiveStr = ""
+
                 }
             } catch (e: IOException) {
                 e.printStackTrace()

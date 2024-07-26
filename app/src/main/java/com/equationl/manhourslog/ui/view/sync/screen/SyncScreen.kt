@@ -1,5 +1,6 @@
 package com.equationl.manhourslog.ui.view.sync.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.equationl.manhourslog.ui.view.LocalNavController
 import com.equationl.manhourslog.ui.view.sync.state.SyncDeviceType
 import com.equationl.manhourslog.ui.view.sync.viewmodel.SyncViewModel
+import com.equationl.manhourslog.ui.widget.CommonConfirmDialog
 import com.equationl.manhourslog.ui.widget.PulsatingCircles
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,6 +53,17 @@ fun SyncScreen(
     val navController = LocalNavController.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+    var isShowExitConfirmDialog by remember { mutableStateOf(false) }
+
+    BackHandler(!isShowExitConfirmDialog) {
+        if (state.syncDeviceType != SyncDeviceType.Wait) {
+            isShowExitConfirmDialog = true
+        }
+        else {
+            navController.popBackStack()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -60,8 +73,12 @@ fun SyncScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            viewModel.stop()
-                            navController.popBackStack()
+                            if (state.syncDeviceType != SyncDeviceType.Wait) {
+                                isShowExitConfirmDialog = true
+                            }
+                            else {
+                                navController.popBackStack()
+                            }
                         }
                     ) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "back")
@@ -69,7 +86,11 @@ fun SyncScreen(
                 },
                 actions = {
                     if (state.syncDeviceType != SyncDeviceType.Wait) {
-                        TextButton(onClick = viewModel::stop) {
+                        TextButton(
+                            onClick = {
+                                isShowExitConfirmDialog = true
+                            }
+                        ) {
                             Text(text = "Stop")
                         }
                     }
@@ -96,6 +117,20 @@ fun SyncScreen(
                 onCliReceive = viewModel::onClickReceive
             )
         }
+    }
+
+    if (isShowExitConfirmDialog) {
+        CommonConfirmDialog(
+            title = "Tip",
+            content = "Are you sure to stop? If sync is in progress, Data will be destroyed",
+            onConfirm = {
+                viewModel.stop()
+                isShowExitConfirmDialog = false
+            },
+            onDismissRequest = {
+                isShowExitConfirmDialog = false
+            }
+        )
     }
 }
 

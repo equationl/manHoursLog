@@ -22,8 +22,6 @@ import com.equationl.manhourslog.ui.view.list.state.StatisticsState
 import com.equationl.manhourslog.util.DateTimeUtil
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
-import com.equationl.manhourslog.util.DateTimeUtil.timeToTimeStamp
-import com.equationl.manhourslog.util.DateTimeUtil.toTimestamp
 import com.equationl.manhourslog.util.ResolveDataUtil
 import com.equationl.manhourslog.util.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -147,69 +145,9 @@ class StatisticsViewModel @Inject constructor(
 
         uri?.let {
             viewModelScope.launch(Dispatchers.IO) {
-                var isHeader = true
                 val buffer = context.contentResolver.openInputStream(it)?.bufferedReader()
                 buffer?.useLines {
-                    for (line in it) {
-                        //Log.i("el", "onImport: line = .$line.")
-                        if (isHeader) {
-                            // 这里为了兼容旧版本格式改为使用字段数量判断而不是直接匹配列表头
-                            if (line.split(",").size < 3) {
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Only support import day's detail .csv file", Toast.LENGTH_SHORT).show()
-                                }
-                                return@launch
-                            }
-                            isHeader = false
-                        }
-                        else {
-                            try {
-                                val lineSplit = line.split(",")
-                                // 如果存在时间戳则使用时间戳，否则重新格式化 start_time 。 但是只有存在时间戳才能完成重复判定
-                                val startTime = lineSplit.getOrNull(4)?.toLongOrNull() ?: lineSplit[0].toTimestamp()
-                                val insertData = DBManHoursTable(
-                                    startTime = startTime,
-                                    endTime = lineSplit[1].toTimestamp(),
-                                    totalTime = lineSplit[2].timeToTimeStamp(),
-                                    noteText = lineSplit.getOrNull(3), // 兼容旧版本，最后一列可能为空
-                                    dataSourceType = 1
-                                )
-
-                                val insertResult = db.manHoursDB().insertData(insertData)
-                                if (insertResult <= 0) { // 插入失败可能是由于重复数据导致（start_time 设置为了唯一键）
-                                    val startTimeStamp = lineSplit.getOrNull(4)?.toLongOrNull()
-                                    if (startTimeStamp != null) {
-                                        // 由于删除数据使用的是软删除，所以还需要判断是否是被软删除了，如果是的话需要恢复数据（这里无法兼容旧数据，如果是旧数据没有时间戳的话无法恢复数据）
-                                        val tempRow = db.manHoursDB().queryRowByStartTime(startTimeStamp)
-                                        if (tempRow?.isDelete == true) {
-                                            val updateResult = db.manHoursDB().markDeleteAndTypeRowByStartTime(startTimeStamp, delete = 0, dataType = 1)
-                                            if (updateResult <= 0) {
-                                                Log.w("el", "onImport: updateDeleteFlag fail: startTime = $startTimeStamp")
-                                            }
-                                        }
-
-                                        val noteText = lineSplit.getOrNull(3)
-                                        if (!noteText.isNullOrBlank()) { // 如果备注不为空，则认为是更新备注
-                                            val updateResult = db.manHoursDB().updateNoteByStartTime(startTimeStamp, noteText)
-                                            if (updateResult <= 0) {
-                                                hasConflict = true
-                                                Log.w("el", "onImport: updateNote fail: startTime = ${startTimeStamp}, note = $noteText")
-                                            }
-                                        }
-                                    }
-                                    else {
-                                        hasConflict = true
-                                        Log.w("el", "onImport: insetData = $insertData, result = $insertResult")
-                                    }
-                                }
-                            } catch (tr: Throwable) {
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Import fail: $tr", Toast.LENGTH_SHORT).show()
-                                }
-                                Log.e("el", "onImport: ", tr)
-                            }
-                        }
-                    }
+                    hasConflict = ResolveDataUtil.importFromCsv(context, it, db)
                 }
 
                 withContext(Dispatchers.Main) {
