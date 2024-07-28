@@ -91,12 +91,16 @@ class SyncViewModel @Inject constructor(
     }
 
     fun stop() {
-        if (_uiState.value.syncDeviceType == SyncDeviceType.Receive) {
-            SocketServer.stopServer()
-            isTheServerStarted = false
-        }
-        if (_uiState.value.syncDeviceType == SyncDeviceType.Send) {
-            SocketClient.closeConnect()
+        try {
+            if (_uiState.value.syncDeviceType == SyncDeviceType.Receive) {
+                SocketServer.stopServer()
+                isTheServerStarted = false
+            }
+            if (_uiState.value.syncDeviceType == SyncDeviceType.Send) {
+                SocketClient.closeConnect()
+            }
+        } catch (tr: Throwable) {
+            Log.e(TAG, "stop: ", tr)
         }
 
         _uiState.update {
@@ -235,25 +239,7 @@ class SyncViewModel @Inject constructor(
         val msgText = msg.decodeToString()
 
         if (rcvSyncData != null) { // 正在接收同步数据
-            repeat(msg.size) {
-                if (msg[it] != SocketConstant.END_FLAG[0]) {
-                    // fixme java.lang.NullPointerException  !!
-                    //rcvSyncData!!.add(msg[it])
-                    rcvSyncData?.add(msg[it])
-                }
-                else {
-                    if (msg.getOrNull(it+1) == SocketConstant.END_FLAG[1]) { // 数据传输结束
-                        val fullData = mutableListOf<Byte>()
-                        fullData.addAll(rcvSyncData!!)
-                        rcvSyncData = null
-                        resolveSyncData(fullData)
-                        if (it+2 < msg.size) { // 还有剩余数据
-                            parseServerData(ipAddress, msg.copyOfRange(it+2, msg.size))
-                        }
-                        return@repeat
-                    }
-                }
-            }
+            syncData(msg, ipAddress)
         }
         else if (msgText.startsWith(SocketConstant.CONNECT_SUCCESS_FLAG)) { // 有客户端连接成功
             _uiState.update {
@@ -279,17 +265,40 @@ class SyncViewModel @Inject constructor(
                     bottomTip = "Synchronizing data...",
                 )
             }
-            // fixme 这里有问题，如果此时一帧数据直接传递完的话，这里会导致无法停止
             rcvSyncData = mutableListOf()
-            rcvSyncData!!.addAll(msg.toList())
+
+            syncData(msg, ipAddress)
         }
         else {
             Log.w(TAG, "parseServerData: 接收到未知的数据：$msgText\n原始数据：${msg.toHexString()}")
         }
     }
 
+    private fun syncData(msg: ByteArray, ipAddress: String) {
+        repeat(msg.size) {
+            if (msg[it] != SocketConstant.END_FLAG[0]) {
+                // fixme java.lang.NullPointerException  !!
+                //rcvSyncData!!.add(msg[it])
+                rcvSyncData?.add(msg[it])
+            }
+            else {
+                if (msg.getOrNull(it+1) == SocketConstant.END_FLAG[1]) { // 数据传输结束
+                    val fullData = mutableListOf<Byte>()
+                    fullData.addAll(rcvSyncData!!)
+                    rcvSyncData = null
+                    resolveSyncData(fullData)
+                    if (it+2 < msg.size) { // 还有剩余数据
+                        parseServerData(ipAddress, msg.copyOfRange(it+2, msg.size))
+                    }
+                    return@repeat
+                }
+            }
+        }
+    }
+
     private fun parseClientData(ipAddress: String, msg: ByteArray) {
         val msgText = msg.decodeToString()
+        // TODO 增加版本号校验
         if (msgText.startsWith(SocketConstant.READY_TO_SYNC_FLAG)) { // 同步前的握手数据
             _uiState.update {
                 it.copy(

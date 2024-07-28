@@ -110,6 +110,8 @@ object SocketClient {
 
     /**
      * 发送心跳消息
+     *
+     * TODO 增加心跳消息超时重连或关闭连接
      */
     private fun sendHeartbeat() {
         if (clientThreadPool == null) {

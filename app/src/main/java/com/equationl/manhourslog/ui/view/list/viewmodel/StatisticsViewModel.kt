@@ -47,7 +47,7 @@ class StatisticsViewModel @Inject constructor(
 
     val uiState = _uiState.asStateFlow()
 
-    init {
+    fun init() {
         viewModelScope.launch {
             loadData()
         }

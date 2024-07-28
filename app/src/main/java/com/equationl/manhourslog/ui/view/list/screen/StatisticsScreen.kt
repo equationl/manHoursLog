@@ -60,6 +60,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -137,6 +138,10 @@ fun StatisticsScreen(
     }
 
     val scaffoldState = rememberBottomSheetScaffoldState()
+
+    LaunchedEffect(key1 = Unit) {
+        viewModel.init()
+    }
 
 
     Scaffold(
