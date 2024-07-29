@@ -298,16 +298,27 @@ class SyncViewModel @Inject constructor(
 
     private fun parseClientData(ipAddress: String, msg: ByteArray) {
         val msgText = msg.decodeToString()
-        // TODO 增加版本号校验
         if (msgText.startsWith(SocketConstant.READY_TO_SYNC_FLAG)) { // 同步前的握手数据
-            _uiState.update {
-                it.copy(
-                    currentTitle = "Syncing",
-                    bottomTip = "Synchronizing data...",
-                )
+            val valueList = msgText.split(":")
+            val version = valueList.getOrNull(1)
+            if (version == BuildConfig.VERSION_CODE.toString()) {
+                _uiState.update {
+                    it.copy(
+                        currentTitle = "Syncing",
+                        bottomTip = "Synchronizing data...",
+                    )
+                }
+                // 数据传输没问题，开始同步
+                startSync()
             }
-            // 数据传输没问题，开始同步
-            startSync()
+            else { // 客户端版本号不同，拒绝同步
+                _uiState.update {
+                    it.copy(
+                        currentTitle = "Fail",
+                        bottomTip = "The app version not same, Please update to the latest version and try again\nYour version: ${BuildConfig.VERSION_CODE}, Another device version: $version",
+                    )
+                }
+            }
         }
         else if (msgText.startsWith(SocketConstant.SYNC_DATA_FINISH)) { // 传输数据完成
             _uiState.update {
