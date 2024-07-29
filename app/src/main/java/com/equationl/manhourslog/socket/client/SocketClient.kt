@@ -3,10 +3,6 @@ package com.equationl.manhourslog.socket.client
 import android.os.Handler
 import android.util.Log
 import com.equationl.manhourslog.constants.SocketConstant
-import com.equationl.manhourslog.constants.SocketConstant.CONNECT_FAIL
-import com.equationl.manhourslog.constants.SocketConstant.CONNECT_SUCCESS
-import com.equationl.manhourslog.constants.SocketConstant.HEARTBEAT_SEND_MSG
-import com.equationl.manhourslog.constants.SocketConstant.SOCKET_PORT
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -16,8 +12,11 @@ import java.net.NoRouteToHostException
 import java.net.Socket
 import java.net.SocketException
 import java.net.SocketTimeoutException
+import java.util.Timer
+import java.util.TimerTask
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.concurrent.schedule
 
 /**
  * Socket客户端
@@ -37,8 +36,11 @@ object SocketClient {
     // 客户端线程池
     private var clientThreadPool: ExecutorService? = null
 
-    //心跳发送间隔
-    private const val HEART_SPACETIME = 3 * 1000
+    /** 心跳发送间隔 */
+    private const val HEART_SPACETIME = 5 * 1000L
+    /** 心跳超时 */
+    private const val HEART_TIMEOUT = 10 * 1000L
+    private var hearBeatTimerTask: TimerTask? = null
 
     private val mHandler: Handler = Handler()
 
@@ -49,18 +51,18 @@ object SocketClient {
         mCallback = callback
         Thread {
             try {
-                socket = Socket(ipAddress, SOCKET_PORT)
+                socket = Socket(ipAddress, SocketConstant.SOCKET_PORT)
                 if (socket!!.isConnected) {
                     //开启心跳,每隔3秒钟发送一次心跳
                     mHandler.post(mHeartRunnable)
                     ClientThread(socket!!, mCallback).start()
-                    callback.otherMsg("success", type = CONNECT_SUCCESS)
+                    callback.otherMsg("success", type = SocketConstant.CONNECT_SUCCESS)
                 }
                 else {
-                    callback.otherMsg("connect fail", type = CONNECT_FAIL)
+                    callback.otherMsg("connect fail", type = SocketConstant.CONNECT_FAIL)
                 }
             } catch (e: IOException) {
-                callback.otherMsg(e.message ?: "connect fail", type = CONNECT_FAIL)
+                callback.otherMsg(e.message ?: "connect fail", type = SocketConstant.CONNECT_FAIL)
                 e.printStackTrace()
             }
         }.start()
@@ -70,6 +72,7 @@ object SocketClient {
      * 关闭连接
      */
     fun closeConnect() {
+        hearBeatTimerTask?.cancel()
         inputStreamReader?.close()
         outputStream?.close()
         socket?.close()
@@ -111,13 +114,12 @@ object SocketClient {
     /**
      * 发送心跳消息
      *
-     * TODO 增加心跳消息超时重连或关闭连接
      */
     private fun sendHeartbeat() {
         if (clientThreadPool == null) {
             clientThreadPool = Executors.newSingleThreadExecutor()
         }
-        val msg = HEARTBEAT_SEND_MSG
+        val msg = SocketConstant.HEARTBEAT_SEND_MSG
         clientThreadPool?.execute {
             if (socket == null) {
                 mCallback.otherMsg("客户端还未连接", type = SocketConstant.HEARTBEAT_FAIL)
@@ -131,13 +133,19 @@ object SocketClient {
             try {
                 outputStream?.write(msg.toByteArray())
                 outputStream?.flush()
-                //发送成功以后，重新建立一个心跳消息
-                mHandler.postDelayed(mHeartRunnable, HEART_SPACETIME.toLong())
+                checkHeartBeatTimeOut()
                 Log.i(TAG, msg)
             } catch (e: IOException) {
                 e.printStackTrace()
                 mCallback.otherMsg("发送心跳消息失败： $e", type = SocketConstant.HEARTBEAT_FAIL)
             }
+        }
+    }
+
+    private fun checkHeartBeatTimeOut() {
+        hearBeatTimerTask = Timer().schedule(HEART_TIMEOUT) {
+            Log.w(TAG, "checkHeartBeatTimeOut: 获取心跳回复超时")
+            mCallback.otherMsg("心跳消息直至超时也没有收到回复", type = SocketConstant.HEARTBEAT_TIMEOUT)
         }
     }
 
@@ -157,9 +165,11 @@ object SocketClient {
                     receiveStr += String(buffer, 0, len, Charsets.UTF_8)
 
                     socket.inetAddress.hostAddress?.let {
-                        if (receiveStr == HEARTBEAT_SEND_MSG) {//收到来自服务端的心跳回复消息
+                        if (receiveStr == SocketConstant.HEARTBEAT_SEND_MSG) {//收到来自服务端的心跳回复消息
                             Log.i(TAG, "心跳正常！")
-                            //准备回复
+                            hearBeatTimerTask?.cancel()
+                            //接收到心跳回复，重新发送一个心跳消息
+                            mHandler.postDelayed(mHeartRunnable, HEART_SPACETIME)
                         } else {
                             callback.receiveServerMsg(it, buffer.copyOfRange(0, len))
                         }

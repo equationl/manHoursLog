@@ -229,6 +229,21 @@ class SyncViewModel @Inject constructor(
                         )
                     }
                 }
+                SocketConstant.HEARTBEAT_TIMEOUT -> {
+                    _uiState.update {
+                        it.copy(
+                            isClientConnected = false,
+                            bottomTip = "Connect fail, The other device is not responding",
+                            currentTitle = "Fail"
+                        )
+                    }
+
+                    try {
+                        SocketClient.closeConnect()
+                    } catch (tr: Throwable) {
+                        Log.e(TAG, "stop: ", tr)
+                    }
+                }
             }
         }
 

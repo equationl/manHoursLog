@@ -19,6 +19,7 @@ object SocketConstant {
 
     const val SOCKET_CLOSED = -1000
     const val HEARTBEAT_FAIL = -1001
+    const val HEARTBEAT_TIMEOUT = -1002
 
     const val CONNECT_SUCCESS = 0
     const val CONNECT_FAIL = -1
