@@ -8,7 +8,6 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.currentState
 import com.equationl.manhourslog.widget.common.constant.WidgetConstants
 
-// TODO 使用 workerManager 定时刷新数据（至少保证一天更新一次）
 // TODO 联动 logState 更新（实时更新）
 class StaticsWidget: GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
