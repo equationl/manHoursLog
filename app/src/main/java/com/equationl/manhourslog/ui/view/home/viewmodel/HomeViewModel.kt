@@ -1,7 +1,9 @@
 package com.equationl.manhourslog.ui.view.home.viewmodel
 
+import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.equationl.manhourslog.App
 import com.equationl.manhourslog.database.DBManHoursTable
 import com.equationl.manhourslog.database.ManHoursDB
 import com.equationl.manhourslog.ui.view.home.state.HomeState
@@ -11,6 +13,8 @@ import com.equationl.manhourslog.util.datastore.DataKey
 import com.equationl.manhourslog.util.datastore.DataStoreUtils
 import com.equationl.manhourslog.util.fromJson
 import com.equationl.manhourslog.util.toJson
+import com.equationl.manhourslog.widget.quickStart.ui.QuickStartWidget
+import com.equationl.manhourslog.widget.statics.ui.StaticsWidget
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,6 +67,12 @@ class HomeViewModel @Inject constructor(
                 DataStoreUtils.saveSyncStringData(DataKey.LOG_STATE, newLogState.toJson())
                 it.copy(logState = newLogState)
             }
+        }
+
+        viewModelScope.launch {
+            // 更新小部件数据
+            QuickStartWidget().updateAll(App.instance)
+            StaticsWidget().updateAll(App.instance)
         }
     }
 

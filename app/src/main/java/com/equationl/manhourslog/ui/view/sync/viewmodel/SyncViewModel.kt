@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// TODO 数据同步应该是双向同步而不是现在这种单向同步
 @HiltViewModel
 class SyncViewModel @Inject constructor(
     private val db: ManHoursDB

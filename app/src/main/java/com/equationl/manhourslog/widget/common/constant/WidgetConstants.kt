@@ -10,6 +10,7 @@ object WidgetConstants {
     const val UPDATE_DATA = "updateData"
     const val LOG_STATE = "logState"
     const val APP_WIDGET_ID = "appWidgetId"
+    const val OPEN_ACTIVITY_TYPE = "openActivityType"
 
     const val UPDATE_ACTION = "updateAction"
 
@@ -18,4 +19,10 @@ object WidgetConstants {
 
     val actionKey = ActionParameters.Key<String>(ACTION_NAME)
     val logStateKey = ActionParameters.Key<String>(LOG_STATE)
+    val openActivityTypeKey = ActionParameters.Key<String>(OPEN_ACTIVITY_TYPE)
+
+    enum class OpActivityType {
+        HOME,
+        STATICS
+    }
 }

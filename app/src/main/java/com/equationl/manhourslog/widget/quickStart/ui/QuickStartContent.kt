@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.action.actionParametersOf
+import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.appWidgetBackground
@@ -20,10 +21,12 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.text.Text
 import androidx.glance.text.TextDefaults
+import com.equationl.manhourslog.MainActivity
 import com.equationl.manhourslog.ui.view.home.state.LogState
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.toJson
 import com.equationl.manhourslog.widget.common.constant.WidgetConstants
+import com.equationl.manhourslog.widget.common.constant.WidgetConstants.openActivityTypeKey
 import com.equationl.manhourslog.widget.quickStart.callback.QuickStartWidgetCallback
 
 @Composable
@@ -37,7 +40,14 @@ fun QuickStartContent(logState: LogState) {
                 .padding(8.dp)
                 .appWidgetBackground()
                 .background(GlanceTheme.colors.widgetBackground)
-                .appWidgetBackgroundCornerRadius(),
+                .appWidgetBackgroundCornerRadius()
+                .clickable(
+                    actionStartActivity<MainActivity>(
+                        actionParametersOf(
+                            openActivityTypeKey to WidgetConstants.OpActivityType.HOME.name,
+                        )
+                    )
+                ),
         ) {
             Text(text = if (logState.isStart) "Start at ${logState.startTime?.formatDateTime("HH:mm:ss") ?: ""}" else "Click below to record")
             Spacer(modifier = GlanceModifier.height(16.dp))

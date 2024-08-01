@@ -17,11 +17,13 @@ import com.equationl.manhourslog.ui.view.sync.screen.SyncScreen
 val LocalNavController = staticCompositionLocalOf<NavHostController> { error("No NavController provided") }
 
 @Composable
-fun HomeNavHost() {
+fun HomeNavHost(
+    startDestination: String = Route.HOME
+) {
     CompositionLocalProvider(
         LocalNavController provides rememberNavController(),
     ) {
-        NavHost(navController = LocalNavController.current, Route.HOME) {
+        NavHost(navController = LocalNavController.current, startDestination) {
             composable(Route.HOME) {
                 HomeScreen()
             }

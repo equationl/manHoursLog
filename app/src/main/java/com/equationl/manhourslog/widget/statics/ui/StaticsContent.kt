@@ -11,6 +11,8 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.ImageProvider
 import androidx.glance.action.actionParametersOf
+import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.components.CircleIconButton
 import androidx.glance.appwidget.components.Scaffold
@@ -23,11 +25,13 @@ import androidx.glance.layout.size
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import com.equationl.manhourslog.MainActivity
 import com.equationl.manhourslog.R
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
 import com.equationl.manhourslog.util.fromJson
 import com.equationl.manhourslog.widget.common.constant.WidgetConstants
+import com.equationl.manhourslog.widget.common.constant.WidgetConstants.openActivityTypeKey
 import com.equationl.manhourslog.widget.common.model.StaticDataModel
 import com.equationl.manhourslog.widget.statics.callback.StaticWidgetCallback
 
@@ -44,7 +48,16 @@ fun StaticsContent(staticDataModelJson: String, lastUpdateTime: Long?) {
                 TitleContent()
             }
         ) {
-            Column {
+            Column(
+                modifier = GlanceModifier
+                    .clickable(
+                        actionStartActivity<MainActivity>(
+                            actionParametersOf(
+                                openActivityTypeKey to WidgetConstants.OpActivityType.STATICS.name,
+                            )
+                        )
+                    )
+            ) {
                 Text(text = "Today: ${staticDataModel?.dayTotalTime?.formatTime() ?: ""}")
                 Spacer(modifier = GlanceModifier.height(8.dp))
                 Text(text = "This month: ${staticDataModel?.monthTotalTime?.formatTime() ?: ""}")

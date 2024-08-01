@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Input
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.ArrowUpward
@@ -91,6 +92,7 @@ import com.equationl.manhourslog.ui.widget.LoadingContent
 import com.equationl.manhourslog.ui.widget.ShowNoteDialog
 import com.equationl.manhourslog.util.DateTimeUtil.formatDateTime
 import com.equationl.manhourslog.util.DateTimeUtil.formatTime
+import com.equationl.manhourslog.util.Utils.findActivity
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import kotlinx.coroutines.launch
 import me.bytebeats.views.charts.bar.BarChart
@@ -232,6 +234,7 @@ private fun TopBar(
     val navController = LocalNavController.current
     var isShowDatePickedDialog by remember { mutableStateOf(false) }
     var isExpandMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     MediumTopAppBar(
         title = {
@@ -246,10 +249,19 @@ private fun TopBar(
         navigationIcon = {
             IconButton(
                 onClick = {
-                    navController.popBackStack()
+                    // 如果是从小部件打开的，则没有返回堆栈，直接退出程序
+                    if (!navController.popBackStack()) {
+                        context.findActivity()?.finish()
+                    }
                 }
             ) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "back")
+                Icon(
+                    if (navController.previousBackStackEntry == null)
+                        Icons.AutoMirrored.Outlined.ExitToApp
+                    else
+                        Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = "back"
+                )
             }
         },
         actions = {
