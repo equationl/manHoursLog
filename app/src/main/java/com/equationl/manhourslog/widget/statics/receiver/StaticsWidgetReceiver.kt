@@ -64,14 +64,30 @@ class StaticsWidgetReceiver: GlanceAppWidgetReceiver() {
             yearTotalTime = yearTotalTime,
         )
 
-        val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
+        if (appWidgetId != -1) { // 更新某个具体的 widget
+            val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
 
-        updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { pref ->
-            pref.toMutablePreferences().apply {
-                this[WidgetConstants.prefKeyStaticsData] = staticDataModel.toJson()
-                this[WidgetConstants.prefKeyLastUpdateTime] = System.currentTimeMillis()
+            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { pref ->
+                pref.toMutablePreferences().apply {
+                    this[WidgetConstants.prefKeyStaticsData] = staticDataModel.toJson()
+                    this[WidgetConstants.prefKeyLastUpdateTime] = System.currentTimeMillis()
+                }
+            }
+            glanceAppWidget.update(context, glanceId)
+        }
+        else { // 没有指定 widgetId，更新所有 widget
+            val glanceIdList = GlanceAppWidgetManager(context).getGlanceIds(StaticsWidget::class.java)
+            for (glanceId in glanceIdList) {
+                glanceId.let {
+                    updateAppWidgetState(context, PreferencesGlanceStateDefinition, it) { pref ->
+                        pref.toMutablePreferences().apply {
+                            this[WidgetConstants.prefKeyStaticsData] = staticDataModel.toJson()
+                            this[WidgetConstants.prefKeyLastUpdateTime] = System.currentTimeMillis()
+                        }
+                    }
+                    glanceAppWidget.update(context, it)
+                }
             }
         }
-        glanceAppWidget.update(context, glanceId)
     }
 }

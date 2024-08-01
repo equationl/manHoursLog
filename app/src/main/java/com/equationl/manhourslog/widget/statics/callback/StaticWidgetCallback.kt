@@ -16,6 +16,20 @@ class StaticWidgetCallback : ActionCallback {
     companion object {
         @Suppress("unused")
         private const val TAG = "el, QuickStartWidgetCallback"
+
+        fun updateDate(context: Context, glanceId: GlanceId?) {
+            val appWidgetId = if (glanceId == null) {
+                -1
+            } else {
+                GlanceAppWidgetManager(context).getAppWidgetId(glanceId)
+            }
+
+            val intent = Intent(context, StaticsWidgetReceiver::class.java).apply {
+                action = UPDATE_ACTION
+                putExtra(APP_WIDGET_ID, appWidgetId)
+            }
+            context.sendBroadcast(intent)
+        }
     }
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
@@ -26,15 +40,5 @@ class StaticWidgetCallback : ActionCallback {
         if (actionName == UPDATE_DATA) {
             updateDate(context, glanceId)
         }
-    }
-
-    private fun updateDate(context: Context, glanceId: GlanceId) {
-        val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(glanceId)
-
-        val intent = Intent(context, StaticsWidgetReceiver::class.java).apply {
-            action = UPDATE_ACTION
-            putExtra(APP_WIDGET_ID, appWidgetId)
-        }
-        context.sendBroadcast(intent)
     }
 }
