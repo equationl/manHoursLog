@@ -169,7 +169,7 @@ fun StatisticsScreen(
                     importLauncher.launch(intent)
                 },
                 onSync = {
-                    navController.navigate(Route.SYNC)
+                    navController.navigate(Route.SYNC_HOME)
                 }
             )
         },

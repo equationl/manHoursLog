@@ -1,7 +1,7 @@
 package com.equationl.manhourslog.ui.view.sync.screen
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,7 +24,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,41 +38,38 @@ import androidx.compose.ui.unit.dp
 import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.equationl.manhourslog.constants.ShareElementKey
 import com.equationl.manhourslog.ui.view.LocalNavController
-import com.equationl.manhourslog.ui.view.sync.state.SyncDeviceType
-import com.equationl.manhourslog.ui.view.sync.viewmodel.SyncViewModel
+import com.equationl.manhourslog.ui.view.LocalShareAnimatedContentScope
+import com.equationl.manhourslog.ui.view.LocalSharedTransitionScope
+import com.equationl.manhourslog.ui.view.sync.viewmodel.SyncClientViewModel
 import com.equationl.manhourslog.ui.widget.CommonConfirmDialog
 import com.equationl.manhourslog.ui.widget.PulsatingCircles
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SyncScreen(
-    viewModel: SyncViewModel = hiltViewModel()
+fun SyncClientScreen(
+    viewModel: SyncClientViewModel = hiltViewModel()
 ) {
     val navController = LocalNavController.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     var isShowExitConfirmDialog by remember { mutableStateOf(false) }
 
-    BackHandler(!isShowExitConfirmDialog) {
-        if (state.syncDeviceType != SyncDeviceType.Wait) {
-            isShowExitConfirmDialog = true
-        }
-        else {
-            navController.popBackStack()
-        }
+    BackHandler(!isShowExitConfirmDialog && state.isClientConnected) {
+        isShowExitConfirmDialog = true
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "Sync Data")
+                    Text(text = "Sync Data (Client)")
                 },
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (state.syncDeviceType != SyncDeviceType.Wait) {
+                            if (state.isClientConnected) {
                                 isShowExitConfirmDialog = true
                             }
                             else {
@@ -84,17 +80,15 @@ fun SyncScreen(
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "back")
                     }
                 },
-                actions = {
-                    if (state.syncDeviceType != SyncDeviceType.Wait) {
-                        TextButton(
-                            onClick = {
-                                isShowExitConfirmDialog = true
-                            }
-                        ) {
-                            Text(text = "Stop")
-                        }
-                    }
-                }
+//                actions = {
+//                    TextButton(
+//                        onClick = {
+//                            isShowExitConfirmDialog = true
+//                        }
+//                    ) {
+//                        Text(text = "Stop")
+//                    }
+//                }
             )
         }
     ) { innerPadding ->
@@ -103,18 +97,17 @@ fun SyncScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (state.syncDeviceType == SyncDeviceType.Send && !state.isClientConnected) {
+            if (!state.isClientConnected) {
                 ClientConnectContent(
                     onClickConnect = viewModel::clientConnect
                 )
             }
 
-            SyncContent(
-                syncDeviceType = state.syncDeviceType,
+            SyncClientContent(
+                isConnect = state.isClientConnected,
                 bottomTip = state.bottomTip,
                 currentTitle = state.currentTitle,
                 onClickSend = viewModel::onClickSend,
-                onCliReceive = viewModel::onClickReceive
             )
         }
     }
@@ -126,6 +119,7 @@ fun SyncScreen(
             onConfirm = {
                 viewModel.stop()
                 isShowExitConfirmDialog = false
+                navController.popBackStack()
             },
             onDismissRequest = {
                 isShowExitConfirmDialog = false
@@ -134,25 +128,34 @@ fun SyncScreen(
     }
 }
 
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun SyncContent(
-    syncDeviceType: SyncDeviceType,
+private fun SyncClientContent(
+    isConnect: Boolean,
     bottomTip: String? = null,
     currentTitle: String? = null,
     onClickSend: () -> Unit,
-    onCliReceive: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        AnimatedVisibility(visible = syncDeviceType != SyncDeviceType.Receive) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedContentScope = LocalShareAnimatedContentScope.current
+
+    with(sharedTransitionScope) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Card(
                 onClick = onClickSend,
                 shape = CircleShape,
-                modifier = Modifier.size(200.dp),
-                colors = CardDefaults.cardColors().copy(containerColor = Color.Transparent)
+                colors = CardDefaults.cardColors().copy(containerColor = Color.Transparent),
+                modifier = Modifier
+                    .size(200.dp)
+                    .sharedElement(
+                        sharedTransitionScope.rememberSharedContentState(key = ShareElementKey.SYNC_CLIENT),
+                        animatedVisibilityScope = animatedContentScope
+                    )
             ) {
                 Column(
                     verticalArrangement = Arrangement.Center,
@@ -161,41 +164,17 @@ private fun SyncContent(
                 ) {
                     PulsatingCircles(
                         text = currentTitle ?: "Send",
-                        isAnimation = syncDeviceType == SyncDeviceType.Send,
+                        isAnimation = isConnect,
                         onClick = onClickSend,
                         backgroundColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        AnimatedVisibility(visible = syncDeviceType != SyncDeviceType.Send) {
-            Card(
-                onClick = onCliReceive,
-                shape = CircleShape,
-                modifier = Modifier.size(200.dp),
-                colors = CardDefaults.cardColors().copy(containerColor = Color.Transparent)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    PulsatingCircles(
-                        text = currentTitle ?: "Receive",
-                        isAnimation = syncDeviceType == SyncDeviceType.Receive,
-                        onClick = onCliReceive,
-                        backgroundColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                }
+            if (bottomTip != null) {
+                Spacer(modifier = Modifier.height(32.dp))
+                Text(text = bottomTip, modifier = Modifier.padding(8.dp))
             }
-        }
-
-        if (bottomTip != null) {
-            Spacer(modifier = Modifier.height(32.dp))
-            Text(text = bottomTip)
         }
     }
 }
