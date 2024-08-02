@@ -165,7 +165,7 @@ object SocketClient {
                     receiveStr += String(buffer, 0, len, Charsets.UTF_8)
 
                     socket.inetAddress.hostAddress?.let {
-                        if (receiveStr == SocketConstant.HEARTBEAT_SEND_MSG) {//收到来自服务端的心跳回复消息
+                        if (receiveStr == SocketConstant.HEARTBEAT_RESPONSE_MSG) {//收到来自服务端的心跳回复消息
                             Log.i(TAG, "心跳正常！")
                             hearBeatTimerTask?.cancel()
                             //接收到心跳回复，重新发送一个心跳消息

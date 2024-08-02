@@ -3,6 +3,8 @@ package com.equationl.manhourslog.util
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import com.equationl.manhourslog.constants.ExportHeader
+import com.equationl.manhourslog.constants.SocketConstant
 import com.equationl.manhourslog.database.DBManHoursTable
 import com.equationl.manhourslog.database.ManHoursDB
 import com.equationl.manhourslog.model.StaticsScreenModel
@@ -209,5 +211,27 @@ object ResolveDataUtil {
         }
 
         return hasConflict
+    }
+
+
+    /** 为同步准备数据 */
+    suspend fun prepareDataForSync(
+        db: ManHoursDB
+    ): ByteArray = withContext(Dispatchers.IO) {
+        val rawDataList = db.manHoursDB().queryRangeDataList(0, System.currentTimeMillis(), 1, Int.MAX_VALUE)
+        val dataModel = rawDataToStaticsModel(rawDataList, StatisticsShowScale.Day)
+        var dataText = SocketConstant.SYNC_DATA_HEADER
+        dataModel.forEachIndexed { index, model ->
+            if (index == 0) {
+                dataText += ExportHeader.DAY
+            }
+            dataText += getCsvRow(StatisticsShowScale.Day, model)
+        }
+
+        val resultByteArray = mutableListOf<Byte>()
+        resultByteArray.addAll(dataText.toByteArray().toList())
+        resultByteArray.addAll(SocketConstant.END_FLAG.toList())
+
+        resultByteArray.toByteArray()
     }
 }

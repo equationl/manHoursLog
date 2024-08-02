@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// TODO 数据同步应该是双向同步而不是现在这种单向同步
 @HiltViewModel
 class SyncServerViewModel @Inject constructor(
     private val db: ManHoursDB
@@ -33,6 +32,7 @@ class SyncServerViewModel @Inject constructor(
 
     private var rcvSyncData: MutableList<Byte>? = null
     private var isTheServerStarted: Boolean = false
+    private var serverSyncData: ByteArray? = null
 
     private val _uiState = MutableStateFlow(SyncServerState())
     val uiState = _uiState.asStateFlow()
@@ -41,6 +41,7 @@ class SyncServerViewModel @Inject constructor(
         // 初始化数据
         _uiState.update {
             _uiState.value.copy(
+                currentTitle = "Launcher",
                 bottomTip = "Click above to launcher server"
             )
         }
@@ -176,7 +177,12 @@ class SyncServerViewModel @Inject constructor(
                     bottomTip = "Check connecting..."
                 )
             }
-            SocketServer.sendToClient("${SocketConstant.READY_TO_SYNC_FLAG}:${BuildConfig.VERSION_CODE}".toByteArray())
+
+            viewModelScope.launch {
+                // 准备数据，当数据接收完成后将此数据发送给客户端
+                serverSyncData = ResolveDataUtil.prepareDataForSync(db)
+                SocketServer.sendToClient("${SocketConstant.READY_TO_SYNC_FLAG}:${BuildConfig.VERSION_CODE}".toByteArray())
+            }
         }
         else if (msgText.startsWith(SocketConstant.SYNC_DATA_HEADER)) { // 开始同步数据
             _uiState.update {
@@ -188,6 +194,14 @@ class SyncServerViewModel @Inject constructor(
             rcvSyncData = mutableListOf()
 
             syncData(msg, ipAddress)
+        }
+        else if (msgText.startsWith(SocketConstant.SYNC_DATA_FINISH)) { // 同步完成
+            _uiState.update {
+                it.copy(
+                    currentTitle = "Finish",
+                    bottomTip = "Data sync finish, you can exit now",
+                )
+            }
         }
         else {
             Log.w(TAG, "parseServerData: 接收到未知的数据：$msgText\n原始数据：${msg.toHexString()}")
@@ -227,16 +241,20 @@ class SyncServerViewModel @Inject constructor(
 
             val result = ResolveDataUtil.importFromCsv(App.instance, fullDataText.lineSequence(), db)
 
-            val tipText = if (result) "Sync Finish" else "Sync Finish, But Some data not sync"
+            val tipText = if (result) "Receive Finish" else "Receive Finish, But Some data not sync"
 
             _uiState.update {
                 it.copy(
-                    currentTitle = "Ready for sync",
-                    bottomTip = "$tipText, Click Stop to exit",
+                    currentTitle = "Send data...",
+                    bottomTip = "$tipText\nSending my data",
                 )
             }
 
             SocketServer.sendToClient(SocketConstant.SYNC_DATA_FINISH.toByteArray())
+            if (serverSyncData != null) {
+                // 如果本机数据不为空，则发送给客户端
+                SocketServer.sendToClient(serverSyncData!!)
+            }
         }
     }
 }

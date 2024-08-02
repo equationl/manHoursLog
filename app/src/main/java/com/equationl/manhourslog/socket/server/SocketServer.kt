@@ -3,6 +3,7 @@ package com.equationl.manhourslog.socket.server
 import android.util.Log
 import com.equationl.manhourslog.constants.SocketConstant
 import com.equationl.manhourslog.constants.SocketConstant.HEARTBEAT_RESPONSE_MSG
+import com.equationl.manhourslog.constants.SocketConstant.HEARTBEAT_SEND_MSG
 import com.equationl.manhourslog.constants.SocketConstant.SOCKET_PORT
 import java.io.IOException
 import java.io.InputStream
@@ -151,7 +152,7 @@ object SocketServer {
                     Log.d(TAG, "run: rcv data($len) = $receiveStr")
 
                     socket.inetAddress.hostAddress?.let {
-                        if (receiveStr == HEARTBEAT_RESPONSE_MSG) {//收到客户端发送的心跳消息
+                        if (receiveStr == HEARTBEAT_SEND_MSG) {//收到客户端发送的心跳消息
                             //准备回复
                             replyHeartbeat()
                         } else {
