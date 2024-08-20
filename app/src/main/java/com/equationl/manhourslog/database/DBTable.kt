@@ -22,7 +22,7 @@ data class DBManHoursTable (
     /**
      * 数据来源：
      *
-     * 0：原始记录；1：导入数据；
+     * 0：原始记录；1：导入数据；2：同步数据
      * */
     @ColumnInfo(name = "data_source_type", defaultValue = "0")
     var dataSourceType: Int = 0,

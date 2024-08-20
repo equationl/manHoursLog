@@ -135,12 +135,15 @@ object ResolveDataUtil {
     /**
      * 将 csv 数据导入数据库
      *
+     * @param dataSourceType 数据来源 0：原始记录；1：导入数据；2：同步数据
+     *
      * @return 是否导入成功，返回 false 表示有部分数据导入失败，此时可能已经有数据导入成功
      * */
     suspend fun importFromCsv(
         context: Context,
         csvLines: Sequence<String>,
-        db: ManHoursDB
+        db: ManHoursDB,
+        dataSourceType: Int
     ): Boolean {
         var isHeader = true
         var hasConflict = false
@@ -171,7 +174,7 @@ object ResolveDataUtil {
                         endTime = lineSplit[1].toTimestamp(),
                         totalTime = lineSplit[2].timeToTimeStamp(),
                         noteText = lineSplit.getOrNull(3), // 兼容旧版本，最后一列可能为空
-                        dataSourceType = 1
+                        dataSourceType = dataSourceType
                     )
 
                     val insertResult = db.manHoursDB().insertData(insertData)

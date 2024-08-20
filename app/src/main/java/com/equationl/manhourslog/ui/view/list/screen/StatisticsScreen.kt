@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.Input
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.BackupTable
@@ -629,7 +630,18 @@ private fun ListCardContent(
         if (currentScale == StatisticsShowScale.Day && item.dataSourceType == 1) {
             Icon(
                 Icons.AutoMirrored.Filled.Input,
-                contentDescription = "input",
+                contentDescription = "import",
+                modifier = Modifier
+                    .padding(8.dp)
+                    .size(8.dp)
+                    .align(Alignment.TopEnd)
+            )
+        }
+
+        if (currentScale == StatisticsShowScale.Day && item.dataSourceType == 2) {
+            Icon(
+                Icons.Filled.CloudSync,
+                contentDescription = "sync",
                 modifier = Modifier
                     .padding(8.dp)
                     .size(8.dp)

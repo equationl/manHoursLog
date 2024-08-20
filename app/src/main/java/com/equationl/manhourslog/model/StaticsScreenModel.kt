@@ -11,7 +11,7 @@ data class StaticsScreenModel(
     /**
      * 数据来源：
      *
-     * null：不使用；0：原始记录；1：导入数据；
+     * null：不使用；0：原始记录；1：导入数据；2：同步数据
      * */
     val dataSourceType: Int?
 )

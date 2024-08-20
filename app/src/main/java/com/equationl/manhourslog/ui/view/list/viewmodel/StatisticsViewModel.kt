@@ -147,7 +147,7 @@ class StatisticsViewModel @Inject constructor(
             viewModelScope.launch(Dispatchers.IO) {
                 val buffer = context.contentResolver.openInputStream(it)?.bufferedReader()
                 buffer?.useLines {
-                    hasConflict = ResolveDataUtil.importFromCsv(context, it, db)
+                    hasConflict = ResolveDataUtil.importFromCsv(context, it, db, 1)
                 }
 
                 withContext(Dispatchers.Main) {

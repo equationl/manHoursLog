@@ -230,7 +230,7 @@ class SyncClientViewModel @Inject constructor(
 
             Log.i(TAG, "resolveSyncData: fullData = $fullDataText")
 
-            val result = ResolveDataUtil.importFromCsv(App.instance, fullDataText.lineSequence(), db)
+            val result = ResolveDataUtil.importFromCsv(App.instance, fullDataText.lineSequence(), db, 2)
 
             val tipText = if (result) "Sync Finish" else "Sync Finish, But Some data not sync"
 
